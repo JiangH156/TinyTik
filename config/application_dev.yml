@@ -1,0 +1,36 @@
+# server
+server:
+  port: 8080
+
+# mysql
+datasource:
+  username:
+  password:
+  host: 127.0.0.1
+  port: 3306
+  database:
+  charset: utf8mb4
+  parseTime: true
+  loc: Asia/Shanghai
+
+# email
+email:
+  alias:
+  host: smtp.163.com
+  port: 465
+  username:
+  password:
+
+# redis
+redis:
+  address: 127.0.0.1
+  port: 6379
+  password:
+  db: 0
+
+# logger
+logger:
+  path: logs
+  name: TinyTik
+  ext: log
+  timeFormat: "2006-01-01"
