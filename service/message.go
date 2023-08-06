@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// 处理复杂业务
 var chatConnMap = sync.Map{}
 
 func RunMessageServer() {
@@ -24,7 +25,6 @@ func RunMessageServer() {
 			fmt.Printf("Accept conn failed: %v\n", err)
 			continue
 		}
-
 		go process(conn)
 	}
 }
