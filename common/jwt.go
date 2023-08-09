@@ -3,8 +3,9 @@ package common
 import (
 	"TinyTik/utils/logger"
 	"errors"
-	"github.com/golang-jwt/jwt/v4"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type UserClaims struct {

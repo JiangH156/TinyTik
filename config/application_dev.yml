@@ -12,6 +12,8 @@ datasource:
   charset: utf8mb4
   parseTime: true
   loc: Asia/Shanghai
+  dsn: "root:ajddwWud@tcp(172.16.32.20:50320)/TinyTik?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn_no_db: "root:ajddwWud@tcp(172.16.32.20:50320)/?charset=utf8mb4&parseTime=True&loc=Local"
 
 # email
 email:
