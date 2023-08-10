@@ -13,13 +13,22 @@ import (
 )
 
 func main() {
+	// 加载配置
 	loadConfig()
-	go service.RunMessageServer()
-	r := gin.Default()
 
+	r := gin.Default()
+	// 加载路由
 	router.InitRouter(r)
 
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	Run(r)
+}
+
+// 服务启动
+func Run(r *gin.Engine) {
+	go service.RunMessageServer()
+	address := viper.GetString("server.address")
+	port := viper.GetInt("server.port")
+	r.Run(fmt.Sprintf("%s:%d", address, port))
 }
 
 func loadConfig() {
@@ -29,7 +38,7 @@ func loadConfig() {
 	// 配置文件所在目录
 	viper.AddConfigPath(parentDir + "/config/")
 	// 配置文件名
-	viper.SetConfigName("application")
+	viper.SetConfigName("application_dev")
 	// 配置文件类型
 	viper.SetConfigType("yml")
 	// 读取配置信息
@@ -37,6 +46,8 @@ func loadConfig() {
 	if err != nil {
 		panic(fmt.Errorf("fail to config viper, %s", err))
 	}
+	// 配置mysql
+	common.InitDB()
 	// 配置logger
 	loadLogger()
 	// 配置redis
@@ -61,7 +72,7 @@ func loadLogger() {
 	name := viper.GetString("logger.name")
 	ext := viper.GetString("logger.ext")
 	timeFormat := viper.GetString("logger.timeFormat")
-	fmt.Println(timeFormat)
+	//fmt.Println(timeFormat)
 	logger.Setup(&logger.Settings{
 		Path:       path,
 		Name:       name,
