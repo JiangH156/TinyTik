@@ -17,10 +17,23 @@ func (auth *AuthRepository) CreateAuth(tx *gorm.DB, userAuth *model.UserAuth) er
 	}
 	return nil
 }
+func (auth *AuthRepository) DeleteAuth(tx *gorm.DB, id int64) error {
+	if err := tx.Where("id = ?", id).Delete(&model.User{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (auth *AuthRepository) GetAuthById(id int64) (userAuth model.UserAuth, err error) {
+	if err = auth.DB.Where("id = ?", id).First(&userAuth).Error; err != nil {
+		return userAuth, err
+	}
+	return userAuth, nil
+}
 
 // 根据用户名获取UserAuth
 func (auth *AuthRepository) GetAuthByUsername(username string) (userAuth model.UserAuth, err error) {
-	if err = auth.DB.Where("user_name = ?", username).First(&model.UserAuth{}).Error; err != nil {
+	if err = auth.DB.Where("user_name = ?", username).First(&userAuth).Error; err != nil {
 		return userAuth, err
 	}
 	return userAuth, nil

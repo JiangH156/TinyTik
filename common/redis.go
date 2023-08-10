@@ -1,8 +1,10 @@
 package common
 
 import (
+	"TinyTik/model"
 	"TinyTik/utils/logger"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
@@ -28,8 +30,8 @@ var (
 )
 
 // 缓存登录用户
-func (r *RedisClient) SetUser(key string, loginUser []byte) error {
-	err := r.Set(key, loginUser, expire)
+func (r *RedisClient) SetUser(key string, user []byte) error {
+	err := r.Set(key, user, expire)
 	if err != nil {
 		return err
 	}
@@ -37,7 +39,7 @@ func (r *RedisClient) SetUser(key string, loginUser []byte) error {
 }
 func (r *RedisClient) GetUser(key string) (user []byte, err error) {
 	u, err := r.Get(key)
-	user = u.([]byte) //类型强转
+	user = ([]byte)(u.(string)) //类型强转
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +48,19 @@ func (r *RedisClient) GetUser(key string) (user []byte, err error) {
 
 func GetRedisClient() *RedisClient {
 	return Redis
+}
+
+func (r *RedisClient) UserLoginInfo(token string) (userInfo model.User, exist bool) {
+	userBytes, err := r.GetUser(token)
+	if err != nil {
+		return userInfo, false
+	}
+	// json反序列化
+	err = json.Unmarshal(userBytes, &userInfo)
+	if err != nil {
+		return userInfo, false
+	}
+	return userInfo, true
 }
 
 func (r *RedisClient) Set(key string, value any, expire time.Duration) error {

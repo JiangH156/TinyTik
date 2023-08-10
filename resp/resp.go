@@ -36,7 +36,7 @@ type UserResponse struct {
 
 func Resp(c *gin.Context, httpCode int, data *Response) {
 	c.JSON(httpCode, gin.H{
-		"StatusCode": data.StatusCode,
-		"StatusMsg":  data.StatusMsg,
+		"status_code": data.StatusCode,
+		"status_msg":  data.StatusMsg,
 	})
 }

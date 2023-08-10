@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/resp"
 	"github.com/gin-gonic/gin"
@@ -20,12 +21,12 @@ var usersLoginInfo = map[string]model.User{
 	},
 }
 
-var userIdSequence = int64(1)
-
+// 用户信息 GET /douyin/user/
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
 
-	if user, exist := usersLoginInfo[token]; exist {
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
 		c.JSON(http.StatusOK, resp.UserResponse{
 			Response: resp.Response{StatusCode: 0},
 			User:     user,

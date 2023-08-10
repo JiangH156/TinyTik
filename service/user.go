@@ -9,7 +9,7 @@ type UserService struct {
 	DB *gorm.DB
 }
 
-func NewServerService() *UserService {
+func NewUserService() *UserService {
 	return &UserService{
 		DB: common.GetDB(),
 	}
