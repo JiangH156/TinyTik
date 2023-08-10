@@ -12,7 +12,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 检查请求头中的认证信息是否存在
 		//authToken := c.GetHeader("Authorization")
-		authToken := c.PostForm("token")
+		authToken := c.Query("token")
 		if authToken == "" {
 			fmt.Println("未提供有效的身份验证信息")
 			//logger.Error("未提供有效的身份验证信息")

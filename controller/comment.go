@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+//处理参数，
+
 type CommentListResponse struct {
 	resp.Response
 	CommentList []model.Comment `json:"comment_list,omitempty"`
