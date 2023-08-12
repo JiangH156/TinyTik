@@ -2,39 +2,60 @@ package controller
 
 import (
 	"TinyTik/model"
+	"TinyTik/repository"
 	"TinyTik/resp"
-	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
-)
+	"strconv"
+	"sync/atomic"
+	"time"
 
-//处理参数，
+	"github.com/gin-gonic/gin"
+)
 
 type CommentListResponse struct {
 	resp.Response
-	CommentList []model.Comment `json:"comment_list,omitempty"`
+	CommentList []model.CommentResponse `json:"comment_list,omitempty"`
 }
 
 type CommentActionResponse struct {
 	resp.Response
-	Comment model.Comment `json:"comment,omitempty"`
+	model.CommentResponse
 }
+
+var commentIdSequence = int64(0) //commentId的id号
 
 // CommentAction no practical effect, just check if token is valid
 func CommentAction(c *gin.Context) {
 	token := c.Query("token")
 	actionType := c.Query("action_type")
-
-	if user, exist := usersLoginInfo[token]; exist {
-		if actionType == "1" {
+	videoIdStr := c.Query("video_id")
+	videoIdInt, _ := strconv.Atoi(videoIdStr)
+	if user, exist := usersLoginInfo[token]; exist { //需要一个根据token找到user的接口
+		if actionType == "1" { //发送评论
 			text := c.Query("comment_text")
+			atomic.AddInt64(&commentIdSequence, 1)
+			tempComment := model.Comment{
+				Id:         commentIdSequence,
+				User:       int64(user.Id),
+				Content:    text,
+				CreateDate: time.Now().Format("05-01"),
+				VideoId:    int64(videoIdInt),
+			}
 			c.JSON(http.StatusOK, CommentActionResponse{Response: resp.Response{StatusCode: 0},
-				Comment: model.Comment{
-					Id:         1,
+				CommentResponse: model.CommentResponse{
+					Id:         commentIdSequence,
 					User:       user,
 					Content:    text,
-					CreateDate: "05-01",
-				}})
+					CreateDate: time.Now().Format("05-01")},
+			})
+			//保存tempComment到数据库中
+			repository.SaveComment(&tempComment)
 			return
+		} else if actionType == "2" { //删除评论
+			comment_id := c.Query("comment_id")
+			video_id := c.Query("video_id")
+			repository.DeleteComment(comment_id, video_id)
 		}
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 0})
 	} else {
@@ -44,8 +65,20 @@ func CommentAction(c *gin.Context) {
 
 // CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
-	c.JSON(http.StatusOK, CommentListResponse{
-		Response:    resp.Response{StatusCode: 0},
-		CommentList: DemoComments,
-	})
+	//token := c.Query("token") //应该不需要鉴权吧
+	video_id := c.Query("video_id")
+	//获取评论
+	commentList, err := repository.GetCommentList(video_id)
+	if err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusOK, CommentListResponse{
+			Response:    resp.Response{StatusCode: -1},
+			CommentList: []model.CommentResponse{},
+		})
+	} else {
+		c.JSON(http.StatusOK, CommentListResponse{
+			Response:    resp.Response{StatusCode: 0},
+			CommentList: commentList,
+		})
+	}
 }
