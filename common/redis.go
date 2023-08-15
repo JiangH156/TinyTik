@@ -7,10 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
 )
 
 type RedisClient struct {
@@ -25,6 +26,7 @@ type RedisConfig struct {
 }
 
 var (
+	RedisA *redis.Client
 	Redis  *RedisClient
 	expire = time.Hour * 24
 )
@@ -73,10 +75,12 @@ func (r *RedisClient) Set(key string, value any, expire time.Duration) error {
 
 func (r *RedisClient) Get(key string) (value any, err error) {
 	value, err = r.client.Get(context.Background(), key).Result()
+
 	if err == redis.Nil {
 		// Token不存在
 		logger.Fatal("Token不存在")
 		return "", errors.New("Token不存在")
+
 	} else if err != nil {
 		//错误处理
 		logger.Error("获取Token令牌错误")
@@ -111,6 +115,7 @@ func RedisSetup(cfg *RedisConfig) {
 		panic("RedisSetup error")
 	}
 	expire = expireDuration
+	RedisA = client
 	Redis = &RedisClient{client: client}
 }
 

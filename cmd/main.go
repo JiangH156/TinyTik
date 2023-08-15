@@ -6,10 +6,16 @@ import (
 	"TinyTik/service"
 	"TinyTik/utils/logger"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+	"sync"
+
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
+)
+
+var (
+	once sync.Once
 )
 
 func main() {
@@ -46,12 +52,16 @@ func loadConfig() {
 	if err != nil {
 		panic(fmt.Errorf("fail to config viper, %s", err))
 	}
-	// 配置mysql
-	common.InitDB()
-	// 配置logger
-	loadLogger()
-	// 配置redis
-	loadRedis()
+	// 使用Once
+	once.Do(func() {
+		//配置mysql
+		common.InitDB()
+		// 配置logger
+		loadLogger()
+		// 配置redis
+		loadRedis()
+	})
+
 }
 
 func loadRedis() {
