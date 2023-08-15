@@ -1,8 +1,10 @@
 package resp
 
-import "TinyTik/service"
+import (
+	"TinyTik/model"
+)
 
 type FavoriteList struct {
 	Res    Response
-	Videos *[]service.VideoList
+	Videos *[]model.VideoList
 }

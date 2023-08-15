@@ -31,6 +31,68 @@ var (
 	expire = time.Hour * 24
 )
 
+func (r *RedisClient) UpdateUser(key string, updatedUser model.User) error {
+	// 获取旧的用户数据
+	userBytes, err := r.GetUser(key)
+	if err != nil {
+		// 处理获取用户数据错误
+		return err
+	}
+
+	// 解码旧的用户数据
+	var existingUser model.User
+	if err := json.Unmarshal(userBytes, &existingUser); err != nil {
+		// 处理解码错误
+		return err
+	}
+
+	// 更新用户数据
+	// 注意：只更新指定需要更新的字段
+	if updatedUser.Name != "" {
+		existingUser.Name = updatedUser.Name
+	}
+	if updatedUser.FollowCount != 0 {
+		existingUser.FollowCount = updatedUser.FollowCount
+	}
+	if updatedUser.FollowerCount != 0 {
+		existingUser.FollowerCount = updatedUser.FollowerCount
+	}
+	if updatedUser.Avatar != "" {
+		existingUser.Avatar = updatedUser.Avatar
+	}
+	if updatedUser.BackgroundImage != "" {
+		existingUser.BackgroundImage = updatedUser.BackgroundImage
+	}
+	if updatedUser.Signature != "" {
+		existingUser.Signature = updatedUser.Signature
+	}
+	if updatedUser.TotalFavorited != 0 {
+		existingUser.TotalFavorited = updatedUser.TotalFavorited
+	}
+	if updatedUser.WorkCount != 0 {
+		existingUser.WorkCount = updatedUser.WorkCount
+	}
+	if updatedUser.FavoriteCount != 0 {
+		existingUser.FavoriteCount = updatedUser.FavoriteCount
+	}
+
+	// 将更新后的用户数据存储回 Redis
+	updatedUserBytes, err := json.Marshal(existingUser)
+	if err != nil {
+		// 处理编码错误
+		return err
+	}
+
+	err = r.SetUser(key, updatedUserBytes)
+	if err != nil {
+		// 处理存储到 Redis 出错的情况
+		return err
+	}
+
+	// 更新成功
+	return nil
+}
+
 // 缓存登录用户
 func (r *RedisClient) SetUser(key string, user []byte) error {
 	err := r.Set(key, user, expire)

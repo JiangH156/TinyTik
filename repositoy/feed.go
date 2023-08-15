@@ -63,6 +63,6 @@ func (v *videos) GetCommentCountByVideoId(ctx context.Context, videoId int64) (i
 	if err != nil {
 		return -1, err
 	}
-	return likeCount, nil
+	return commentCount, nil
 
 }

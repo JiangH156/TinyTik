@@ -3,6 +3,7 @@ package router
 import (
 	"TinyTik/controller"
 	"TinyTik/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,7 +24,7 @@ func InitRouter(r *gin.Engine) {
 	// extra apis - I
 	apiRouter.POST("/favorite/action/", controller.FavoriteAction)
 	apiRouter.GET("/favorite/list/", controller.FavoriteList)
-	apiRouter.POST("/comment/action/", controller.CommentAction)
+	apiRouter.POST("/comment/action/", middleware.AuthMiddleware(), controller.CommentAction)
 	apiRouter.GET("/comment/list/", controller.CommentList)
 
 	// extra apis - II
@@ -31,6 +32,6 @@ func InitRouter(r *gin.Engine) {
 	apiRouter.GET("/relation/follow/list/", controller.FollowList)
 	apiRouter.GET("/relation/follower/list/", controller.FollowerList)
 	apiRouter.GET("/relation/friend/list/", controller.FriendList)
-	apiRouter.GET("/message/chat/", controller.MessageChat)
-	apiRouter.POST("/message/action/", controller.MessageAction)
+	apiRouter.GET("/message/chat/", middleware.AuthMiddleware(), controller.MessageChat)
+	apiRouter.POST("/message/action/", middleware.AuthMiddleware(), controller.MessageAction)
 }

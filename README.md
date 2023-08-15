@@ -9,27 +9,27 @@
 
 Go版本：1.20
 
-| 技术   | 功能                      | 官网                                         |
-| ------ | ------------------------- | -------------------------------------------- |
-| Gin    | Web 框架，路由注册        | https://gin-gonic.com/zh-cn/                 |
-| Gorm   | ORM框架，用于对象关系映射 | https://gorm.io/zh_CN/                       |
-| MySQL  | 关系型数据库              | https://www.mysql.com/                       |
-| Redis  | 缓存数据库               | https://redis.uptrace.dev/zh/guide/ |
-| JWT    | 跨域认证，生成和验证令牌  | https://jwt.io/                              |
-| Viper  | 配置文件                  | https://github.com/spf13/viper               |
-| Gomail | 邮件服务                  | https://github.com/go-gomail/gomail          |
-| Bcrypt | 密码加密服务              | https://godoc.org/golang.org/x/crypto/bcrypt |
+| 技术   | 功能             | 官网                                          |
+|------|----------------|---------------------------------------------|
+| Gin  | Web 框架，路由注册    | https://gin-gonic.com/zh-cn/                |
+| Gorm | ORM框架，用于对象关系映射 | https://gorm.io/zh_CN/                      |
+| MySQL | 关系型数据库         | https://www.mysql.com/                      |
+| Redis | 缓存数据库          | https://redis.uptrace.dev/zh/guide/         |
+| JWT  | 跨域认证，生成和验证令牌   | https://jwt.io/                             |
+| Viper | 配置文件           | https://github.com/spf13/viper              |
+| Bcrypt | 密码加密服务         | https://godoc.org/golang.org/x/crypto/bcrypt |
+| validator     | 参数校验           | https://github.com/go-playground/validator  |
 
 
 
 ## 3、团队分工
 
-| 成员   | 介绍                 | 内容                                       |
-| ------ | -------------------- | ------------------------------------------ |
-| 黄江   | 福建农林大学准大三   | 用户模块（注册、登录、信息管理）           |
-| 周帅鹏 | 湖南大学软件研二在读 | 社交模块（用户关注、粉丝、好友）           |
-| 周灿   |                      | 评论和聊天模块（评论、消息管理）           |
-| 殷家豪 |                      | 喜欢和发布模块（点赞、喜欢、视频投稿发布） |
+| 成员   | 介绍                 | 内容                        |
+| ------ | -------------------- |---------------------------|
+| 黄江   | 福建农林大学准大三   | 用户模块（注册、登录、信息管理）          |
+| 周帅鹏 | 湖南大学软件研二在读 | 社交模块（用户关注、粉丝、好友）          |
+| 周灿   |                      | 评论和聊天模块（评论、消息管理）          |
+| 殷家豪 |                      | 喜欢和发布模块（视频流、点赞、喜欢、视频投稿发布） |
 
 ## 4、项目管理
 
