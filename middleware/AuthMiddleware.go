@@ -3,6 +3,7 @@ package middleware
 import (
 	"TinyTik/common"
 	"TinyTik/resp"
+	"TinyTik/utils/logger"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -20,28 +21,22 @@ func AuthMiddleware() gin.HandlerFunc {
 				StatusCode: 401,
 				StatusMsg:  "未提供有效的身份验证信息",
 			})
-			// 跳转登录界面
-			c.Redirect(http.StatusFound, "/douyin/user/login/")
+			// 跳转登录界面,前端没有处理这个情况
+			//c.Redirect(http.StatusFound, "/douyin/user/login/")
 			return
 		}
 		// 检查令牌有效性
-		if !ValidateToken(authToken) {
-			//logger.Error("token验证失败")
+		redis := common.GetRedisClient()
+		if !redis.TokenIsExist(authToken) {
+			logger.Error("token不存在，验证失败")
 			resp.Resp(c, http.StatusUnauthorized, &resp.Response{
 				StatusCode: 401,
 				StatusMsg:  "token验证失败",
 			})
 			// 跳转登录界面
-			c.Redirect(http.StatusFound, "/douyin/user/login/")
+			//c.Redirect(http.StatusFound, "/douyin/user/login/")
 			return
 		}
 		c.Next()
 	}
-}
-
-// 验证token有效性
-func ValidateToken(vToken string) bool {
-	// redis中是否缓存token
-	_, err := common.Redis.GetToken(vToken)
-	return err != nil
 }

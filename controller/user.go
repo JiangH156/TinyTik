@@ -1,11 +1,11 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/resp"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"sync/atomic"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -21,73 +21,18 @@ var usersLoginInfo = map[string]model.User{
 	},
 }
 
-var userIdSequence = int64(1)
-
-type UserLoginResponse struct {
-	resp.Response
-	UserId int64  `json:"user_id,omitempty"`
-	Token  string `json:"token"`
-}
-
-type UserResponse struct {
-	resp.Response
-	User model.User `json:"user"`
-}
-
-func Register(c *gin.Context) {
-	username := c.Query("username")
-	password := c.Query("password")
-
-	token := username + password
-
-	if _, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: resp.Response{StatusCode: 1, StatusMsg: "User already exist"},
-		})
-	} else {
-		atomic.AddInt64(&userIdSequence, 1)
-		newUser := model.User{
-			Id:   userIdSequence,
-			Name: username,
-		}
-		usersLoginInfo[token] = newUser
-		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: resp.Response{StatusCode: 0},
-			UserId:   userIdSequence,
-			Token:    username + password,
-		})
-	}
-}
-
-func Login(c *gin.Context) {
-	username := c.Query("username")
-	password := c.Query("password")
-
-	token := username + password
-
-	if user, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: resp.Response{StatusCode: 0},
-			UserId:   user.Id,
-			Token:    token,
-		})
-	} else {
-		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
-		})
-	}
-}
-
+// 用户信息 GET /douyin/user/
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
 
-	if user, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, UserResponse{
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
+		c.JSON(http.StatusOK, resp.UserResponse{
 			Response: resp.Response{StatusCode: 0},
 			User:     user,
 		})
 	} else {
-		c.JSON(http.StatusOK, UserResponse{
+		c.JSON(http.StatusOK, resp.UserResponse{
 			Response: resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
 		})
 	}
