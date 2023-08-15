@@ -2,12 +2,10 @@ package repository
 
 import (
 	"TinyTik/model"
+	"TinyTik/resp"
 	"fmt"
-	"log"
-	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -19,54 +17,40 @@ var CommentDB *gorm.DB
 var commentsLock sync.RWMutex
 
 func InitComment() {
-	fmt.Print("执行initComment函数")
 	//用viper读取message.yaml配置文件
 	viper.AddConfigPath("./config")
-	viper.SetConfigType("yaml")
-	viper.SetConfigName("app")
+	viper.SetConfigType("yml")
+	viper.SetConfigName("application_dev")
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
-	fmt.Printf("viper.Get(\"dsn\"): %v\n", viper.Get("mysql.dsn"))
 	//连接到数据库dsn
 	dsn := viper.GetString("mysql.dsn_no_db")
 	fmt.Println("dns:", dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) //在 GORM v2 中，数据库连接是由 GORM 管理的连接池自动管理的，并且不需要手动关闭连接
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	fmt.Println("??????????")
 	// 创建数据库
 	err = db.Exec("CREATE DATABASE IF NOT EXISTS TinyTik").Error
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold: time.Second, // 慢 SQL 阈值
-			LogLevel:      logger.Info, // Log level
-			Colorful:      true,        // 禁用彩色打印
-		},
-	)
 	// 连接到 TinyTik 数据库
 	dsn = viper.GetString("mysql.dsn")
-	CommentDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: newLogger})
+	CommentDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
-
-	fmt.Println("成功连接到数据库！")
-
 	// 创建数据表
 	err = CommentDB.Table("messages").AutoMigrate(&model.Message{}, &model.User{})
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
-	fmt.Println("数据迁移成功！")
+	logger.Println("数据迁移成功！")
 }
 
 // 保存评论
@@ -77,7 +61,7 @@ func SaveComment(comment *model.Comment) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	log.Println("评论已成功保存，ID为：", comment.Id)
+	logger.Println("评论已成功保存，ID为：", comment.Id)
 	return nil
 }
 
@@ -91,7 +75,7 @@ func DeleteComment(commentID, videoID string) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	log.Printf("记录已成功删除: %v", comment)
+	logger.Printf("记录已成功删除: %v", comment)
 
 	// // 通过 videoID 找到对应的视频，将视频评论总数 commentCount 减一：commentCount--
 	// video, err := GetVideoByID(videoID) // 需要一个根据 videoID 获取视频的函数
@@ -120,7 +104,7 @@ func UpdateVideo(video *model.Video) error {
 }
 
 // 获取评论列表，这个评论列表需要包含user这个对象一起返回
-func GetCommentList(videoIdStr string) ([]model.CommentResponse, error) {
+func GetCommentList(videoIdStr string) ([]resp.CommentResponse, error) {
 	videoIdInt, err := strconv.Atoi(videoIdStr)
 	if err != nil {
 		return nil, err
@@ -130,7 +114,7 @@ func GetCommentList(videoIdStr string) ([]model.CommentResponse, error) {
 	commentsLock.RLock()
 
 	var comments []*model.Comment
-	result := CommentDB.Where("video_id = ?", videoID).Find(&comments)
+	result := CommentDB.Table("videos").Where("video_id = ?", videoID).Find(&comments)
 	if result.Error != nil {
 		commentsLock.RUnlock()
 		return nil, result.Error
@@ -150,10 +134,10 @@ func GetCommentList(videoIdStr string) ([]model.CommentResponse, error) {
 	}
 
 	// 构建 CommentResponse 列表
-	commentsResponse := make([]model.CommentResponse, len(comments))
+	commentsResponse := make([]resp.CommentResponse, len(comments))
 	for i, comment := range comments {
 		user := findUserByID(users, comment.User)
-		commentResponse := model.CommentResponse{
+		commentResponse := resp.CommentResponse{
 			Id:         comment.Id,
 			User:       *user,
 			Content:    comment.Content,

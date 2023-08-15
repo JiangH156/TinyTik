@@ -4,7 +4,7 @@ import (
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/resp"
-	"log"
+	"TinyTik/utils/logger"
 	"net/http"
 	"strconv"
 	"sync/atomic"
@@ -15,12 +15,12 @@ import (
 
 type CommentListResponse struct {
 	resp.Response
-	CommentList []model.CommentResponse `json:"comment_list,omitempty"`
+	CommentList []resp.CommentResponse `json:"comment_list,omitempty"`
 }
 
 type CommentActionResponse struct {
 	resp.Response
-	model.CommentResponse
+	resp.CommentResponse
 }
 
 var commentIdSequence = int64(0) //commentId的id号
@@ -43,7 +43,7 @@ func CommentAction(c *gin.Context) {
 				VideoId:    int64(videoIdInt),
 			}
 			c.JSON(http.StatusOK, CommentActionResponse{Response: resp.Response{StatusCode: 0},
-				CommentResponse: model.CommentResponse{
+				CommentResponse: resp.CommentResponse{
 					Id:         commentIdSequence,
 					User:       user,
 					Content:    text,
@@ -65,15 +65,14 @@ func CommentAction(c *gin.Context) {
 
 // CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
-	//token := c.Query("token") //应该不需要鉴权吧
 	video_id := c.Query("video_id")
 	//获取评论
 	commentList, err := repository.GetCommentList(video_id)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 		c.JSON(http.StatusOK, CommentListResponse{
 			Response:    resp.Response{StatusCode: -1},
-			CommentList: []model.CommentResponse{},
+			CommentList: []resp.CommentResponse{},
 		})
 	} else {
 		c.JSON(http.StatusOK, CommentListResponse{

@@ -4,6 +4,7 @@ import (
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/resp"
+	"TinyTik/utils/logger"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -31,7 +32,18 @@ func MessageAction(c *gin.Context) {
 			ToUserId:   int64(userIdB),
 			FromUserId: user.Id,
 		}
-		repository.SendMsg(curMessage)
+		err := repository.SendMsg(curMessage)
+		if err != nil {
+			// 处理错误，例如记录日志或返回错误响应
+			logger.Error(err) // 记录错误日志
+
+			// 返回错误响应
+			c.JSON(http.StatusInternalServerError, resp.Response{
+				StatusCode: 1,
+				StatusMsg:  "Failed to send message",
+			})
+			return
+		}
 		fmt.Println("发送数据成功")
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 0, StatusMsg: "send success"})
 	} else {

@@ -1,6 +1,8 @@
 package resp
 
 import (
+	"TinyTik/model"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,4 +30,11 @@ func Resp(c *gin.Context, httpCode int, data *Response) {
 		"StatusCode": data.StatusCode,
 		"StatusMsg":  data.StatusMsg,
 	})
+}
+
+type CommentResponse struct {
+	Id         int64      `json:"id,omitempty" gorm:"primaryKey;autoIncrement:true"`
+	User       model.User `json:"user"`
+	Content    string     `json:"content,omitempty"`
+	CreateDate string     `json:"create_date,omitempty"`
 }
