@@ -3,7 +3,9 @@ package repository
 import (
 	"TinyTik/common"
 	"TinyTik/model"
+
 	"context"
+
 
 	"gorm.io/gorm"
 )
@@ -29,9 +31,12 @@ func (c *CommentRepository) CreateComment(tx *gorm.DB, comment *model.Comment) e
 
 // 删除评论
 func (c *CommentRepository) DeleteCommentById(tx *gorm.DB, commentID string) error {
+
 	var comment model.Comment
 	result := tx.Table("comments").Delete(&comment, commentID)
 	if result.Error != nil {
+		// 回滚事务
+		tx.Rollback()
 		return result.Error
 	}
 	return nil

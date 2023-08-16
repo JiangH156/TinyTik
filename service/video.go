@@ -85,6 +85,7 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 	for _, v := range *videoList {
 
 		var respVideo VideoList
+
 		respVideo.VideoS = v
 
 		wg := sync.WaitGroup{}
@@ -94,6 +95,9 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 		go func(v *VideoList) {
 			defer wg.Done()
 			userInfo, err := repository.NewUserRepository().GetUserById(v.VideoS.AuthorId) //GetUserInfoByAuthorId
+			userInfo.Signature = "try"
+			userInfo.Avatar = "http://localhost:8080/public/1.jpg"
+			userInfo.BackgroundImage = "http://localhost:8080/public/1.jpg"
 			if err != nil {
 				//日志
 				return

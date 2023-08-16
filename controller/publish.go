@@ -4,8 +4,10 @@ import (
 	"TinyTik/model"
 	"TinyTik/resp"
 	"TinyTik/service"
+	"TinyTik/utils/logger"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -23,9 +25,10 @@ type VideoListResponse struct {
 // Publish check token then save upload file to public directory
 func Publish(c *gin.Context) {
 	title := c.PostForm("title")
-	videoHeader, err := c.FormFile("file")
+
+	videoHeader, err := c.FormFile("data")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, resp.Response{
+		c.JSON(http.StatusInternalServerError, resp.Response{
 			StatusCode: -1,
 			StatusMsg:  "Get file err",
 		})
@@ -39,21 +42,29 @@ func Publish(c *gin.Context) {
 
 	// 存储视频数据
 	videoPath := fmt.Sprintf("public/%s-%s", uuid.New().String(), videoHeader.Filename)
+
 	if err := c.SaveUploadedFile(videoHeader, videoPath); err != nil {
-		c.JSON(http.StatusBadRequest, resp.Response{
+		c.JSON(http.StatusInternalServerError, resp.Response{
 			StatusCode: -1,
 			StatusMsg:  "Save file err",
 		})
 		return
 	}
+
+	playUrl := fmt.Sprintf("http://localhost:8080/%s", videoPath)
+
 	// 截取视频封面
 	coverPath := generateVideoCover(videoPath)
+	logger.Debug(coverPath)
+	coverUrl := fmt.Sprintf("http://localhost:8080/%s", coverPath)
+	_ = coverUrl
 
 	var video model.Video
 	video.AuthorId = userId
-	video.CoverUrl = coverPath
+	// video.CoverUrl = coverUrl
+	video.CoverUrl = "http://localhost:8080/public/3.png"
 	video.CreatedAt = time.Now()
-	video.PlayUrl = videoPath
+	video.PlayUrl = playUrl
 	video.Title = title
 	video.UpdatedAt = time.Now()
 
@@ -61,13 +72,13 @@ func Publish(c *gin.Context) {
 	err = service.NewVideo().Publish(c, &video)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, resp.Response{
+		c.JSON(http.StatusInternalServerError, resp.Response{
 			StatusCode: -1,
 			StatusMsg:  "Save file err",
 		})
 
 	} else {
-		c.JSON(http.StatusBadRequest, resp.Response{
+		c.JSON(http.StatusOK, resp.Response{
 			StatusCode: 0,
 			StatusMsg:  videoHeader.Filename + " uploaded successfully",
 		})
@@ -105,8 +116,16 @@ func PublishList(c *gin.Context) {
 func generateVideoCover(videoPath string) string {
 	// 使用 ffmpeg 获取视频的第一帧作为封面
 	coverFilename := strings.TrimSuffix(videoPath, ".mp4") + "_cover.jpg"
-	command := fmt.Sprintf("ffmpeg -i %s -ss 00:00:01 -vframes 1 %s", videoPath, coverFilename)
-	_, err := exec.Command("sh", "-c", command).Output()
+	command := []string{
+		"-i", videoPath,
+		"-ss", "00:00:01",
+		"-vframes", "1",
+		coverFilename,
+	}
+	cmd := exec.Command("ffmpeg", command...)
+	cmd.Stderr = os.Stderr // Redirect stderr to console for error messages
+
+	err := cmd.Run()
 	if err != nil {
 		fmt.Println("Error generating cover:", err)
 		return ""

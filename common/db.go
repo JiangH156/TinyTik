@@ -25,11 +25,11 @@ func InitDB() {
 		username, password, host, port, database, charset, parseTime, url.QueryEscape(loc))
 
 	db, err := gorm.Open(mysql.Open(dsn))
-	
+
 	if err != nil {
 		panic(fmt.Sprintf("fail to init database, %s\n", err))
 	}
-	db.AutoMigrate(model.UserAuth{}, model.User{}, model.Message{}, model.Comment{}, model.Video{}, model.Like{})
+	db.AutoMigrate(model.UserAuth{}, model.User{}, model.Message{}, model.Comment{}, model.Video{}, model.Like{}, model.Relation{})
 	DB = db
 }
 func GetDB() *gorm.DB {

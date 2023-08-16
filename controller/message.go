@@ -63,6 +63,7 @@ func MessageChat(c *gin.Context) {
 		userIdB, _ := strconv.Atoi(toUserId)
 		MessageService := service.NewMessageService()
 		msgList, _ := MessageService.GetMeassageList(user.Id, int64(userIdB), preMsgTime)
+
 		c.JSON(http.StatusOK, ChatResponse{Response: resp.Response{StatusCode: 0, StatusMsg: "pull success"}, MessageList: msgList})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
