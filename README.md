@@ -9,16 +9,16 @@
 
 Go版本：1.20
 
-| 技术   | 功能             | 官网                                          |
-|------|----------------|---------------------------------------------|
-| Gin  | Web 框架，路由注册    | https://gin-gonic.com/zh-cn/                |
-| Gorm | ORM框架，用于对象关系映射 | https://gorm.io/zh_CN/                      |
-| MySQL | 关系型数据库         | https://www.mysql.com/                      |
-| Redis | 缓存数据库          | https://redis.uptrace.dev/zh/guide/         |
-| JWT  | 跨域认证，生成和验证令牌   | https://jwt.io/                             |
-| Viper | 配置文件           | https://github.com/spf13/viper              |
-| Bcrypt | 密码加密服务         | https://godoc.org/golang.org/x/crypto/bcrypt |
-| validator     | 参数校验           | https://github.com/go-playground/validator  |
+| 技术        | 功能             | 官网                                          |
+|-----------|----------------|---------------------------------------------|
+| Gin       | Web 框架，路由注册    | https://gin-gonic.com/zh-cn/                |
+| Gorm      | ORM框架，用于对象关系映射 | https://gorm.io/zh_CN/                      |
+| MySQL     | 关系型数据库         | https://www.mysql.com/                      |
+| Redis     | 缓存数据库          | https://redis.uptrace.dev/zh/guide/         |
+| JWT       | 跨域认证，生成和验证令牌   | https://jwt.io/                             |
+| Viper     | 配置文件           | https://github.com/spf13/viper              |
+| Bcrypt    | 密码加密服务         | https://godoc.org/golang.org/x/crypto/bcrypt |
+| Validator | 参数校验           | https://github.com/go-playground/validator  |
 
 
 
@@ -42,7 +42,7 @@ github仓库地址：https://github.com/JiangH156/TinyTik
 ## 5、项目结构
 
 ```
-go_lib
+TinyTik
 ├─cmd             -- 后台启动管理  
 ├─common          -- 通用的代码或功能
 ├─config          -- 配置文件
