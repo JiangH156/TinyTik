@@ -37,3 +37,8 @@
 [DEBUG][like.go:45] 2023/08/16 10:45:00 [func (l *likes) GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int64, error) {]
 [DEBUG][like.go:90] 2023/08/16 10:45:00 [GetlikeIdListByUserId]
 [DEBUG][like.go:47] 2023/08/16 10:45:00 [videoService.FavoriteList]
+[DEBUG][video.go:58] 2023/08/16 13:01:39 [no videos]
+[DEBUG][video.go:58] 2023/08/16 13:01:42 [no videos]
+[DEBUG][video.go:58] 2023/08/16 13:02:08 [no videos]
+[DEBUG][video.go:58] 2023/08/16 13:02:10 [no videos]
+[FATAL][jwt.go:41] 2023/08/16 15:32:59 [0xc0003c41e0]

@@ -11,7 +11,7 @@ import (
 
 type FeedResponse struct {
 	resp.Response
-	VideoList []service.VideoList `json:"video_list,omitempty"`
+	VideoList []service.VideoList `json:"video_list"`
 	NextTime  int64               `json:"next_time,omitempty"`
 }
 
