@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/resp"
@@ -31,7 +32,8 @@ func CommentAction(c *gin.Context) {
 	actionType := c.Query("action_type")
 	videoIdStr := c.Query("video_id")
 	videoIdInt, _ := strconv.Atoi(videoIdStr)
-	if user, exist := usersLoginInfo[token]; exist { //需要一个根据token找到user的接口
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist { //需要一个根据token找到user的接口
 		if actionType == "1" { //发送评论
 			text := c.Query("comment_text")
 			atomic.AddInt64(&commentIdSequence, 1)

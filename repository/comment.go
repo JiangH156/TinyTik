@@ -29,14 +29,29 @@ func SaveComment(comment *model.Comment) error {
 
 // 删除评论
 func DeleteComment(commentID, videoID string) error {
+	// 开始事务
+	tx := CommentDB.Begin()
+
+	// 加锁
 	commentsLock.Lock()
 	defer commentsLock.Unlock()
 
+	// 删除评论
 	var comment model.Comment
-	result := CommentDB.Table("comments").Delete(&comment, commentID)
+	result := tx.Table("comments").Delete(&comment, commentID)
 	if result.Error != nil {
+		// 回滚事务
+		tx.Rollback()
 		return result.Error
 	}
+	// 提交事务
+	err := tx.Commit().Error
+	if err != nil {
+		// 处理提交事务错误
+		tx.Rollback()
+		return err
+	}
+
 	logger.Info("记录已成功删除: %v", comment)
 
 	// // 通过 videoID 找到对应的视频，将视频评论总数 commentCount 减一：commentCount--
@@ -50,7 +65,6 @@ func DeleteComment(commentID, videoID string) error {
 	// if err != nil {
 	// 	return err
 	// }
-
 	return nil
 }
 
