@@ -15,6 +15,8 @@ type VideoRepositoy interface {
 	GetVideosByUserID(ctx context.Context, userId int64) (*[]model.Video, error)
 	GetVideosByLatestTime(ctx context.Context, latestTime time.Time) (*[]model.Video, time.Time, error)
 	GetVideoListByLikeIdList(ctx context.Context, likeList []int64) (*[]model.Video, error)
+
+	GetCommentCountByVideoId(ctx context.Context, videoId int64) (int64, error)
 }
 
 type videos struct {
@@ -50,7 +52,6 @@ func (v *videos) GetVideosByLatestTime(ctx context.Context, latestTime time.Time
 		return &videos, videos[len(videos)-1].CreatedAt, err
 
 	}
-
 	// 	return &videos, time.Now(), err
 }
 
@@ -62,4 +63,17 @@ func (v *videos) GetVideoListByLikeIdList(ctx context.Context, likeList []int64)
 	}
 	return &videoList, nil
 
+}
+func (v *videos) GetCommentCountByVideoId(ctx context.Context, videoId int64) (int64, error) {
+	var commentCount int64
+	err := v.db.Model(&model.Comment{}).Where("video_id=?", videoId).Count(&commentCount).Error
+	if err != nil {
+		return -1, err
+	}
+	// Check if the commentCount is zero before using it
+	if commentCount == 0 {
+		return 0, nil
+	}
+
+	return commentCount, nil
 }

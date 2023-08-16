@@ -4,6 +4,7 @@ import (
 	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/repository"
+	"TinyTik/utils/logger"
 
 	"context"
 	"fmt"
@@ -86,14 +87,17 @@ func (l *likeSerVice) FavoriteList(ctx context.Context, userId int64) (*[]VideoL
 	//错误处理
 	likeIdList, err := repository.NewLikes().GetlikeIdListByUserId(ctx, userId)
 	if err != nil {
+		logger.Debug("GetlikeIdListByUserId")
 		return nil, err
 	}
 	videoList, err := repository.NewFeed().GetVideoListByLikeIdList(ctx, likeIdList)
 	if err != nil {
+		logger.Debug("GetVideoListByLikeIdList")
 		return nil, err
 	}
 	resp, err := feedService.GetRespVideo(ctx, videoList)
 	if err != nil {
+		logger.Debug("GetRespVideo")
 		return nil, err
 	}
 
