@@ -41,9 +41,9 @@ func loadConfig() {
 	// 配置viper相关信息
 	dir, _ := os.Getwd()
 	parentDir := filepath.Dir(dir)
+
 	// 配置文件所在目录
-	viper.AddConfigPath(parentDir + "/config/")
-	// 配置文件名
+	viper.AddConfigPath(parentDir + "/TinyTik/config/")
 	viper.SetConfigName("application_dev")
 	// 配置文件类型
 	viper.SetConfigType("yml")

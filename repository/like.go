@@ -1,4 +1,4 @@
-package repositoy
+package repository
 
 import (
 	"TinyTik/common"
@@ -12,6 +12,7 @@ type LikeRepositoy interface {
 	FavoriteAction(ctx context.Context, userId int64, videoId int64, Liked bool) error
 	GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int64, error)
 	GetLikeCountByVideoId(ctx context.Context, videoId int64) (int64, error)
+	GetIslike(ctx context.Context, videoId int64, userId int64) (bool, error)
 }
 type likes struct {
 	db *gorm.DB
@@ -53,4 +54,13 @@ func (l *likes) GetLikeCountByVideoId(ctx context.Context, videoId int64) (int64
 	}
 	return likeCount, nil
 
+}
+func (l *likes) GetIslike(ctx context.Context, videoId int64, userId int64) (bool, error) {
+
+	var isLike bool
+	err := l.db.Model(&model.Like{}).Where("video_id=? and user_id=?", videoId, userId).Find(&isLike).Error
+	if err != nil {
+		return false, err
+	}
+	return isLike, nil
 }

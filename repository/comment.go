@@ -3,6 +3,9 @@ package repository
 import (
 	"TinyTik/model"
 	"TinyTik/resp"
+
+	"TinyTik/utils/logger"
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -10,7 +13,6 @@ import (
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 var CommentDB *gorm.DB
@@ -50,7 +52,7 @@ func InitComment() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Println("数据迁移成功！")
+	fmt.Println("数据迁移成功！")
 }
 
 // 保存评论
@@ -61,7 +63,7 @@ func SaveComment(comment *model.Comment) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	logger.Println("评论已成功保存，ID为：", comment.Id)
+	fmt.Println("评论已成功保存，ID为：", comment.Id)
 	return nil
 }
 
@@ -75,7 +77,7 @@ func DeleteComment(commentID, videoID string) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	logger.Printf("记录已成功删除: %v", comment)
+	fmt.Printf("记录已成功删除: %v", comment)
 
 	// // 通过 videoID 找到对应的视频，将视频评论总数 commentCount 减一：commentCount--
 	// video, err := GetVideoByID(videoID) // 需要一个根据 videoID 获取视频的函数
@@ -169,4 +171,13 @@ func findUserByID(users []*model.User, userID int64) *model.User {
 		}
 	}
 	return nil
+}
+
+func GetCommentCountByVideoId(ctx context.Context, videoId int64) (int64, error) {
+	var commentCount int64
+	err := CommentDB.Model(&model.Comment{}).Where("video_id=? ", videoId).Count(&commentCount).Error
+	if err != nil {
+		return -1, err
+	}
+	return commentCount, nil
 }

@@ -17,10 +17,10 @@ func (v *Video) TableName() string {
 }
 
 // FavoriteList  在service的响应结构体
-type VideoList struct {
-	VideoS        Video
-	UserS         User
-	FavoriteCount int64 `json:"favorite_count"`
-	CommentCount  int64 `json:"comment_count"`
-	IsFavorite    bool  `json:"is_favorite"`
-}
+// type VideoList struct {
+// 	VideoS        Video
+// 	UserS         User  `json:"author"`
+// 	FavoriteCount int64 `json:"favorite_count"`
+// 	CommentCount  int64 `json:"comment_count"`
+// 	IsFavorite    bool  `json:"is_favorite"`
+// }

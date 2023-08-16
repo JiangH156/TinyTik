@@ -3,7 +3,8 @@ package service
 import (
 	"TinyTik/common"
 	"TinyTik/model"
-	"TinyTik/repositoy"
+	"TinyTik/repository"
+
 	"context"
 	"fmt"
 	"time"
@@ -16,7 +17,7 @@ var (
 type LikeSerVice interface {
 	//点赞还是取消
 	FavoriteAction(ctx context.Context, userId int64, videoId int64, action_type int64) error
-	FavoriteList(ctx context.Context, userId string) (*[]model.VideoList, error) //favorite_count comment_count  is_favorite __--根据userid查找用户信息
+	FavoriteList(ctx context.Context, userId int64) (*[]VideoList, error) //favorite_count comment_count  is_favorite __--根据userid查找用户信息
 
 }
 
@@ -38,7 +39,7 @@ func NewlikeSerVice() *likeSerVice {
 
 func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId int64, action_type int64) error {
 	// var ls likeSerVice
-	likeRepositoy := repositoy.NewLikes()
+	likeRepositoy := repository.NewLikes()
 
 	if action_type == 1 { //执行点赞操作
 		// 在Redis中记录用户点赞状态
@@ -80,26 +81,22 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 // }
 
 // favorite_count comment_count  is_favorite       __--根据userid查找用户信息
-func (l *likeSerVice) FavoriteList(ctx context.Context, userId int64) (*[]model.VideoList, error) {
+func (l *likeSerVice) FavoriteList(ctx context.Context, userId int64) (*[]VideoList, error) {
 
-	var resp []model.VideoList
-
-	likeIdList, err := repositoy.NewLikes().GetlikeIdListByUserId(ctx, userId)
-	videolist, err := repositoy.NewFeed().GetVideoListByLikeIdList(ctx, likeIdList)
-	for k, v := range *videolist {
-		userInfo, err := repositoy.NewUserRepository().GetUserById(v.AuthorId) //GetUserInfoByAuthorId
-		favoriteCount,err:=repositoy.NewLikes().GetLikeCountByVideoId(ctx,videoId)
-		CommentCount,err:= 
-		IsFavorite ,err:=	
-
-		append(resp, model.VideoList{
-			VideoS :v,
-			UserS :userinfo,
-			FavoriteCount:,
-			CommentCount:,
-			IsFavorite :,
-		})
-
+	//错误处理
+	likeIdList, err := repository.NewLikes().GetlikeIdListByUserId(ctx, userId)
+	if err != nil {
+		return nil, err
 	}
+	videoList, err := repository.NewFeed().GetVideoListByLikeIdList(ctx, likeIdList)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := feedService.GetRespVideo(ctx, videoList)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 
 }

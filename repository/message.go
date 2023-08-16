@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var MsgDB *gorm.DB
 var messagesLock sync.RWMutex
 
-func init() {
-	InitMessage()
-}
+// func init() {
+// 	InitMessage()
+// }
 
 func InitMessage() {
 	//用viper读取message.yaml配置文件

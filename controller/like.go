@@ -9,6 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type AllFavoriteList struct {
+	Res    resp.Response
+	Videos *[]service.VideoList
+}
+
 // FavoriteAction no practical effect, just check if token is valid
 func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseInt(c.PostForm("video_id"), 10, 64)
@@ -18,7 +23,7 @@ func FavoriteAction(c *gin.Context) {
 	likeSerVice := service.NewlikeSerVice()
 
 	if err := likeSerVice.FavoriteAction(c, userId, videoId, actionType); err != nil {
-		c.JSON(http.StatusBadRequest, resp.Response{
+		c.JSON(http.StatusInternalServerError, resp.Response{
 			StatusCode: -1,
 			StatusMsg:  "FavoriteAction false",
 		})
@@ -33,11 +38,12 @@ func FavoriteAction(c *gin.Context) {
 
 // FavoriteList all users have same favorite video list
 func FavoriteList(c *gin.Context) {
-	userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
+	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
+
 	videoService := service.NewlikeSerVice()
 	videoList, err := videoService.FavoriteList(c, userId)
 	if err != nil {
-		c.JSON(404, resp.FavoriteList{
+		c.JSON(http.StatusInternalServerError, AllFavoriteList{
 			Res: resp.Response{
 				StatusCode: -1,
 				StatusMsg:  "Like list false",
@@ -46,7 +52,7 @@ func FavoriteList(c *gin.Context) {
 
 	} else {
 
-		c.JSON(http.StatusOK, resp.FavoriteList{
+		c.JSON(http.StatusOK, AllFavoriteList{
 			Res: resp.Response{
 				StatusCode: 0,
 				StatusMsg:  "Like list success",
