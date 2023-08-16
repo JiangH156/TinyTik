@@ -114,7 +114,8 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 		}(&respVideo)
 		go func(v *VideoList) {
 			defer wg.Done()
-			commentCount, err := repository.GetCommentCountByVideoId(ctx, v.VideoS.Id)
+			commentRepo := repository.NewCommentRepository()
+			commentCount, err := commentRepo.GetCommentCountByVideoId(ctx, v.VideoS.Id)
 			if err != nil {
 				//日志
 				return
