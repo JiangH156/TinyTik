@@ -2,18 +2,16 @@ package controller
 
 import (
 	"TinyTik/model"
+	"TinyTik/repository"
 	"TinyTik/resp"
+	"TinyTik/utils/logger"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-	"sync/atomic"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
-
-var tempChat = map[string][]model.Message{}
-
-var messageIdSequence = int64(1)
 
 type ChatResponse struct {
 	resp.Response
@@ -26,23 +24,28 @@ func MessageAction(c *gin.Context) {
 	toUserId := c.Query("to_user_id")
 	content := c.Query("content")
 
-	if user, exist := usersLoginInfo[token]; exist {
+	if user, exist := usersLoginInfo[token]; exist { //用户存在，生成聊天key
 		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(user.Id, int64(userIdB))
-
-		atomic.AddInt64(&messageIdSequence, 1)
 		curMessage := model.Message{
-			Id:         messageIdSequence,
 			Content:    content,
-			CreateTime: time.Now().Format(time.Kitchen),
+			CreateTime: int64(time.Now().Unix()),
+			ToUserId:   int64(userIdB),
+			FromUserId: user.Id,
 		}
+		err := repository.SendMsg(curMessage)
+		if err != nil {
+			// 处理错误，例如记录日志或返回错误响应
+			logger.Error(err) // 记录错误日志
 
-		if messages, exist := tempChat[chatKey]; exist {
-			tempChat[chatKey] = append(messages, curMessage)
-		} else {
-			tempChat[chatKey] = []model.Message{curMessage}
+			// 返回错误响应
+			c.JSON(http.StatusInternalServerError, resp.Response{
+				StatusCode: 1,
+				StatusMsg:  "Failed to send message",
+			})
+			return
 		}
-		c.JSON(http.StatusOK, resp.Response{StatusCode: 0})
+		fmt.Println("发送数据成功")
+		c.JSON(http.StatusOK, resp.Response{StatusCode: 0, StatusMsg: "send success"})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
@@ -52,20 +55,16 @@ func MessageAction(c *gin.Context) {
 func MessageChat(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
+	preMsgTime, _ := strconv.ParseInt(c.Query("pre_msg_time"), 10, 64)
+
+	fmt.Print("进到chat里面了")
 
 	if user, exist := usersLoginInfo[token]; exist {
 		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(user.Id, int64(userIdB))
-
-		c.JSON(http.StatusOK, ChatResponse{Response: resp.Response{StatusCode: 0}, MessageList: tempChat[chatKey]})
+		msgList, _ := repository.GetMeassageList(user.Id, int64(userIdB), preMsgTime)
+		fmt.Printf("msgList: %v\n", msgList)
+		c.JSON(http.StatusOK, ChatResponse{Response: resp.Response{StatusCode: 0, StatusMsg: "pull success"}, MessageList: msgList})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
-}
-
-func genChatKey(userIdA int64, userIdB int64) string {
-	if userIdA > userIdB {
-		return fmt.Sprintf("%d_%d", userIdB, userIdA)
-	}
-	return fmt.Sprintf("%d_%d", userIdA, userIdB)
 }
