@@ -3,8 +3,8 @@ package controller
 import (
 	"TinyTik/common"
 	"TinyTik/model"
-	"TinyTik/repository"
 	"TinyTik/resp"
+	"TinyTik/service"
 	"TinyTik/utils/logger"
 	"net/http"
 	"strconv"
@@ -33,7 +33,8 @@ func MessageAction(c *gin.Context) {
 			ToUserId:   int64(userIdB),
 			FromUserId: user.Id,
 		}
-		err := repository.SendMsg(curMessage)
+		MessageService := service.NewMessageService()
+		err := MessageService.SendMsg(&curMessage)
 		if err != nil {
 			// 处理错误，例如记录日志或返回错误响应
 			logger.Error(err) // 记录错误日志
@@ -56,10 +57,13 @@ func MessageChat(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
 	preMsgTime, _ := strconv.ParseInt(c.Query("pre_msg_time"), 10, 64)
+
 	redis := common.GetRedisClient()
 	if user, exist := redis.UserLoginInfo(token); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
-		msgList, _ := repository.GetMeassageList(user.Id, int64(userIdB), preMsgTime)
+		MessageService := service.NewMessageService()
+		msgList, _ := MessageService.GetMeassageList(user.Id, int64(userIdB), preMsgTime)
+
 		c.JSON(http.StatusOK, ChatResponse{Response: resp.Response{StatusCode: 0, StatusMsg: "pull success"}, MessageList: msgList})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
