@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/resp"
@@ -24,7 +25,8 @@ func MessageAction(c *gin.Context) {
 	toUserId := c.Query("to_user_id")
 	content := c.Query("content")
 
-	if user, exist := usersLoginInfo[token]; exist { //用户存在，生成聊天key
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist { //用户存在，生成聊天key
 		userIdB, _ := strconv.Atoi(toUserId)
 		curMessage := model.Message{
 			Content:    content,
@@ -57,6 +59,7 @@ func MessageChat(c *gin.Context) {
 	toUserId := c.Query("to_user_id")
 	preMsgTime, _ := strconv.ParseInt(c.Query("pre_msg_time"), 10, 64)
 
+	//TODO
 	fmt.Print("进到chat里面了")
 
 	if user, exist := usersLoginInfo[token]; exist {

@@ -1,4 +1,4 @@
-package repositoy
+package repository
 
 import (
 	"TinyTik/common"

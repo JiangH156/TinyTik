@@ -3,7 +3,7 @@ package service
 import (
 	"TinyTik/common"
 	"TinyTik/model"
-	"TinyTik/repositoy"
+	"TinyTik/repository"
 	"TinyTik/utils/logger"
 	"encoding/json"
 	"errors"
@@ -19,7 +19,7 @@ type AuthService struct {
 // 用户注册
 func (u *AuthService) Register(regAuth model.UserAuth) (id int64, token string, lErr common.LError) {
 	// 用户是否存在
-	authRepository := repositoy.NewAuthRepository()
+	authRepository := repository.NewAuthRepository()
 	_, err := authRepository.GetIDByUsername(regAuth.UserName)
 	// 1.正确查询到了用户id
 	if err == nil {
@@ -70,7 +70,7 @@ func (u *AuthService) Register(regAuth model.UserAuth) (id int64, token string, 
 		FollowerCount: 0,
 		IsFollow:      false,
 	}
-	userRepository := repositoy.NewUserRepository()
+	userRepository := repository.NewUserRepository()
 	err = userRepository.CreateUser(tx, creUser)
 	if err != nil {
 		logger.Error("userRepository.CreateUser error:", err)
@@ -128,7 +128,7 @@ func (u *AuthService) Register(regAuth model.UserAuth) (id int64, token string, 
 
 func (u *AuthService) Login(loginAuth model.UserAuth) (id int64, token string, lErr common.LError) {
 	// 数据库查询数据
-	authRepository := repositoy.NewAuthRepository()
+	authRepository := repository.NewAuthRepository()
 	auth, err := authRepository.GetAuthByUsername(loginAuth.UserName)
 	if err != nil {
 		//1.发生ErrRecordNotFound错误
@@ -168,7 +168,7 @@ func (u *AuthService) Login(loginAuth model.UserAuth) (id int64, token string, l
 		}
 	}
 	// 登录的用户，直接添加到redis缓存中
-	userRepository := repositoy.NewUserRepository()
+	userRepository := repository.NewUserRepository()
 	user, err := userRepository.GetUserById(auth.ID)
 	// 用户是存在的，错误不是ErrRecordNotFound错误
 	if err != nil {
