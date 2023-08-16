@@ -24,8 +24,6 @@ func InitDB() {
 	dsn := fmt.Sprintf("%s:%s@(%s:%d)/%s?charset=%s&parseTime=%s&loc=%s",
 		username, password, host, port, database, charset, parseTime, url.QueryEscape(loc))
 
-	//TODO
-	fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn))
 	
 	if err != nil {

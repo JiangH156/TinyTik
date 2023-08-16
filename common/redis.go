@@ -46,36 +46,6 @@ func (r *RedisClient) UpdateUser(key string, updatedUser model.User) error {
 		return err
 	}
 
-	// 更新用户数据
-	// 注意：只更新指定需要更新的字段
-	if updatedUser.Name != "" {
-		existingUser.Name = updatedUser.Name
-	}
-	if updatedUser.FollowCount != 0 {
-		existingUser.FollowCount = updatedUser.FollowCount
-	}
-	if updatedUser.FollowerCount != 0 {
-		existingUser.FollowerCount = updatedUser.FollowerCount
-	}
-	if updatedUser.Avatar != "" {
-		existingUser.Avatar = updatedUser.Avatar
-	}
-	if updatedUser.BackgroundImage != "" {
-		existingUser.BackgroundImage = updatedUser.BackgroundImage
-	}
-	if updatedUser.Signature != "" {
-		existingUser.Signature = updatedUser.Signature
-	}
-	if updatedUser.TotalFavorited != 0 {
-		existingUser.TotalFavorited = updatedUser.TotalFavorited
-	}
-	if updatedUser.WorkCount != 0 {
-		existingUser.WorkCount = updatedUser.WorkCount
-	}
-	if updatedUser.FavoriteCount != 0 {
-		existingUser.FavoriteCount = updatedUser.FavoriteCount
-	}
-
 	// 将更新后的用户数据存储回 Redis
 	updatedUserBytes, err := json.Marshal(existingUser)
 	if err != nil {
