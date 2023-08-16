@@ -15,6 +15,7 @@ type LikeRepositoy interface {
 	GetLikeCountByVideoId(ctx context.Context, videoId int64) (int64, error)
 	GetIslike(ctx context.Context, videoId int64, userId int64) (bool, error)
 }
+
 type likes struct {
 	db *gorm.DB
 }
@@ -32,12 +33,12 @@ func (l *likes) FavoriteAction(ctx context.Context, userId int64, videoId int64,
 	var like model.Like
 	like = model.Like{UserId: userId, VideoId: videoId, Liked: liked}
 	if err := l.db.Save(&like).Error; err != nil {
-
 		return err
 
 	}
 	return nil
 }
+
 func (l *likes) GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int64, error) {
 	var likeList []int64
 	err := l.db.Model(&model.Like{}).Select("video_id").Where("user_id = ? and liked = ?", userId, true).Find(&likeList).Error

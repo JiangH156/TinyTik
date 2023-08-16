@@ -18,7 +18,9 @@ type AllFavoriteList struct {
 // FavoriteAction no practical effect, just check if token is valid
 func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseInt(c.PostForm("video_id"), 10, 64)
+
 	userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
+
 	actionType, _ := strconv.ParseInt(c.PostForm("action_type"), 10, 64)
 
 	likeSerVice := service.NewlikeSerVice()

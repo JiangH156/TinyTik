@@ -39,7 +39,8 @@ func Publish(c *gin.Context) {
 	userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
 
 	// 存储视频数据
-	videoPath := fmt.Sprintf("public/%s-%s", uuid.New().String(), videoHeader.Filename)
+	videoPath := fmt.Sprintf("%s-%s", uuid.New().String(), videoHeader.Filename)
+
 	if err := c.SaveUploadedFile(videoHeader, videoPath); err != nil {
 		c.JSON(http.StatusInternalServerError, resp.Response{
 			StatusCode: -1,
@@ -48,11 +49,11 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	playUrl := fmt.Sprintf("http://localhost:8080/%s", videoPath)
+	playUrl := fmt.Sprintf("http://localhost:8080/static/%s", videoPath)
 
 	// 截取视频封面
 	coverPath := generateVideoCover(videoPath)
-	coverUrl := fmt.Sprintf("http://localhost:8080/%s", coverPath)
+	coverUrl := fmt.Sprintf("http://localhost:8080/static/%s", coverPath)
 
 	var video model.Video
 	video.AuthorId = userId
