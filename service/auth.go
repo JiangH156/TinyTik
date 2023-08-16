@@ -4,12 +4,17 @@ import (
 	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/repository"
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9a2a48d56c2dc1e125a56fa6125b3670685b3df6
 	"TinyTik/utils/logger"
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 type AuthService struct {
