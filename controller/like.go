@@ -3,6 +3,7 @@ package controller
 import (
 	"TinyTik/resp"
 	"TinyTik/service"
+	"TinyTik/utils/logger"
 	"net/http"
 	"strconv"
 
@@ -39,10 +40,11 @@ func FavoriteAction(c *gin.Context) {
 // FavoriteList all users have same favorite video list
 func FavoriteList(c *gin.Context) {
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-
 	videoService := service.NewlikeSerVice()
+
 	videoList, err := videoService.FavoriteList(c, userId)
 	if err != nil {
+		logger.Debug("videoService.FavoriteList")
 		c.JSON(http.StatusInternalServerError, AllFavoriteList{
 			Res: resp.Response{
 				StatusCode: -1,
