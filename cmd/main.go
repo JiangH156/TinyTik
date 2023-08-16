@@ -3,7 +3,6 @@ package main
 import (
 	"TinyTik/common"
 	"TinyTik/router"
-	"TinyTik/service"
 	"TinyTik/utils/logger"
 	"fmt"
 	"os"
@@ -31,7 +30,6 @@ func main() {
 
 // 服务启动
 func Run(r *gin.Engine) {
-	go service.RunMessageServer()
 	address := viper.GetString("server.address")
 	port := viper.GetInt("server.port")
 	r.Run(fmt.Sprintf("%s:%d", address, port))
