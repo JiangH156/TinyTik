@@ -6,7 +6,6 @@ import (
 	"TinyTik/repository"
 	"TinyTik/resp"
 	"TinyTik/utils/logger"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -46,7 +45,6 @@ func MessageAction(c *gin.Context) {
 			})
 			return
 		}
-		fmt.Println("发送数据成功")
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 0, StatusMsg: "send success"})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
@@ -58,14 +56,10 @@ func MessageChat(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
 	preMsgTime, _ := strconv.ParseInt(c.Query("pre_msg_time"), 10, 64)
-
-	//TODO
-	fmt.Print("进到chat里面了")
-
-	if user, exist := usersLoginInfo[token]; exist {
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
 		msgList, _ := repository.GetMeassageList(user.Id, int64(userIdB), preMsgTime)
-		fmt.Printf("msgList: %v\n", msgList)
 		c.JSON(http.StatusOK, ChatResponse{Response: resp.Response{StatusCode: 0, StatusMsg: "pull success"}, MessageList: msgList})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
