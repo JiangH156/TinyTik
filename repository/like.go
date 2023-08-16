@@ -3,6 +3,7 @@ package repository
 import (
 	"TinyTik/common"
 	"TinyTik/model"
+	"TinyTik/utils/logger"
 	"context"
 
 	"gorm.io/gorm"
@@ -39,16 +40,18 @@ func (l *likes) FavoriteAction(ctx context.Context, userId int64, videoId int64,
 }
 func (l *likes) GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int64, error) {
 	var likeList []int64
-	err := l.db.Select("video_id").Where("user_id=? and liked=?", userId, true).Find(&likeList).Error
+	err := l.db.Model(&model.Like{}).Select("video_id").Where("user_id = ? and liked = ?", userId, true).Find(&likeList).Error
 	if err != nil {
+		logger.Debug("func (l *likes) GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int64, error) {")
 		return nil, err
 	}
 
 	return likeList, nil
 }
+
 func (l *likes) GetLikeCountByVideoId(ctx context.Context, videoId int64) (int64, error) {
 	var likeCount int64
-	err := l.db.Model(&model.Like{}).Where("video_id=? and like =?", videoId, true).Count(&likeCount).Error
+	err := l.db.Model(&model.Like{}).Where("video_id=? and liked =?", videoId, true).Count(&likeCount).Error
 	if err != nil {
 		return -1, err
 	}

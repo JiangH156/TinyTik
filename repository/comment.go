@@ -4,7 +4,6 @@ import (
 	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/resp"
-	"context"
 	"strconv"
 	"sync"
 
@@ -132,13 +131,4 @@ func findUserByID(users []*model.User, userID int64) *model.User {
 		}
 	}
 	return nil
-}
-
-func GetCommentCountByVideoId(ctx context.Context, videoId int64) (int64, error) {
-	var commentCount int64
-	err := CommentDB.Model(&model.Comment{}).Where("video_id=? ", videoId).Count(&commentCount).Error
-	if err != nil {
-		return -1, err
-	}
-	return commentCount, nil
 }
