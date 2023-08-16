@@ -3,10 +3,11 @@ package common
 import (
 	"TinyTik/model"
 	"fmt"
+	"net/url"
+
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"net/url"
 )
 
 var DB *gorm.DB
@@ -24,14 +25,11 @@ func InitDB() {
 		username, password, host, port, database, charset, parseTime, url.QueryEscape(loc))
 
 	db, err := gorm.Open(mysql.Open(dsn))
+	
 	if err != nil {
 		panic(fmt.Sprintf("fail to init database, %s\n", err))
 	}
-	db.AutoMigrate(model.UserAuth{})
-	db.AutoMigrate(model.User{})
-	db.AutoMigrate(model.Message{})
-	db.AutoMigrate(model.Comment{})
-	db.AutoMigrate(model.Video{})
+	db.AutoMigrate(model.UserAuth{}, model.User{}, model.Message{}, model.Comment{}, model.Video{}, model.Like{})
 	DB = db
 }
 func GetDB() *gorm.DB {
