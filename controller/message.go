@@ -56,7 +56,6 @@ func MessageChat(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
 	preMsgTime, _ := strconv.ParseInt(c.Query("pre_msg_time"), 10, 64)
-
 	redis := common.GetRedisClient()
 	if user, exist := redis.UserLoginInfo(token); exist {
 		userIdB, _ := strconv.Atoi(toUserId)

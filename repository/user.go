@@ -1,8 +1,9 @@
-package repositoy
+package repository
 
 import (
 	"TinyTik/common"
 	"TinyTik/model"
+
 	"gorm.io/gorm"
 )
 
@@ -24,7 +25,8 @@ func (r *UserRepository) GetUserByUsername(username string) (user model.User, er
 }
 
 func (r *UserRepository) GetUserById(id int64) (user model.User, err error) {
-	if err := r.DB.Where("id = ?", id).First(&user).Error; err != nil {
+	// if err := r.DB.Where("id = ?", id).First(&user).Error; err != nil {
+	if err := r.DB.Where("id >= ?", id).First(&user).Error; err != nil {
 		return user, err
 	}
 	return user, nil

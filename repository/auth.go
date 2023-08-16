@@ -1,8 +1,9 @@
-package repositoy
+package repository
 
 import (
 	"TinyTik/common"
 	"TinyTik/model"
+
 	"gorm.io/gorm"
 )
 

@@ -7,10 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
 )
 
 type RedisClient struct {
@@ -25,6 +26,7 @@ type RedisConfig struct {
 }
 
 var (
+	RedisA *redis.Client
 	Redis  *RedisClient
 	expire = time.Hour * 24
 )
@@ -42,36 +44,6 @@ func (r *RedisClient) UpdateUser(key string, updatedUser model.User) error {
 	if err := json.Unmarshal(userBytes, &existingUser); err != nil {
 		// 处理解码错误
 		return err
-	}
-
-	// 更新用户数据
-	// 注意：只更新指定需要更新的字段
-	if updatedUser.Name != "" {
-		existingUser.Name = updatedUser.Name
-	}
-	if updatedUser.FollowCount != 0 {
-		existingUser.FollowCount = updatedUser.FollowCount
-	}
-	if updatedUser.FollowerCount != 0 {
-		existingUser.FollowerCount = updatedUser.FollowerCount
-	}
-	if updatedUser.Avatar != "" {
-		existingUser.Avatar = updatedUser.Avatar
-	}
-	if updatedUser.BackgroundImage != "" {
-		existingUser.BackgroundImage = updatedUser.BackgroundImage
-	}
-	if updatedUser.Signature != "" {
-		existingUser.Signature = updatedUser.Signature
-	}
-	if updatedUser.TotalFavorited != 0 {
-		existingUser.TotalFavorited = updatedUser.TotalFavorited
-	}
-	if updatedUser.WorkCount != 0 {
-		existingUser.WorkCount = updatedUser.WorkCount
-	}
-	if updatedUser.FavoriteCount != 0 {
-		existingUser.FavoriteCount = updatedUser.FavoriteCount
 	}
 
 	// 将更新后的用户数据存储回 Redis
@@ -135,10 +107,12 @@ func (r *RedisClient) Set(key string, value any, expire time.Duration) error {
 
 func (r *RedisClient) Get(key string) (value any, err error) {
 	value, err = r.client.Get(context.Background(), key).Result()
+
 	if err == redis.Nil {
 		// Token不存在
 		logger.Fatal("Token不存在")
 		return "", errors.New("Token不存在")
+
 	} else if err != nil {
 		//错误处理
 		logger.Error("获取Token令牌错误")
@@ -173,6 +147,7 @@ func RedisSetup(cfg *RedisConfig) {
 		panic("RedisSetup error")
 	}
 	expire = expireDuration
+	RedisA = client
 	Redis = &RedisClient{client: client}
 }
 

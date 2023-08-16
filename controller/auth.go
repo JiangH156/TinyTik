@@ -15,6 +15,7 @@ func Register(c *gin.Context) {
 	// 数据接收
 	username := c.Query("username")
 	password := c.Query("password")
+
 	// 数据验证
 	if err := common.ValidateUserAuth(model.UserAuth{UserName: username, Password: password}); err != nil {
 		logger.Error("Data format error")
@@ -24,6 +25,7 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
+
 	authService := service.NewAuthService()
 	// service注册逻辑
 	id, token, lErr := authService.Register(model.UserAuth{UserName: username, Password: password})
