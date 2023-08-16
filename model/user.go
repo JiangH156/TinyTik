@@ -1,5 +1,12 @@
 package model
 
+import (
+	"TinyTik/utils/logger"
+	"fmt"
+
+	"gorm.io/gorm"
+)
+
 type User struct {
 	Id              int64  `gorm:"id;primary_key;autoIncrement;comment:用户id"`
 	Name            string `gorm:"name;type:varchar(32);omitempty;comment:用户名称"`
@@ -12,4 +19,13 @@ type User struct {
 	TotalFavorited  int64  `gorm:"total_favorited;omitempty;comment:获赞数量"`
 	WorkCount       int64  `gorm:"work_count;omitempty;comment:作品数量"`
 	FavoriteCount   int64  `gorm:"favorite_count;omitempty;comment:点赞数量"`
+}
+
+// 使用 Hook 进行合法性检查
+func (u *User) BeforeUpdate(tx *gorm.DB) error {
+	if u.FollowCount < 0 || u.FollowerCount < 0 {
+		logger.Error("Invalid Update: Follow/Unfollow action yield minus value.")
+		return fmt.Errorf("操作数为负")
+	}
+	return nil
 }
