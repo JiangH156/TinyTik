@@ -22,7 +22,10 @@ func FavoriteAction(c *gin.Context) {
 
 	// userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
 	var userId int64
-	token := c.PostForm("token")
+	token := c.Query("token")
+	if token == "" {
+		logger.Debug("tokennnnnnnnnnnnnnnnnn")
+	}
 	redis := common.GetRedisClient()
 	if user, exist := redis.UserLoginInfo(token); exist {
 		userId = user.Id
