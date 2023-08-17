@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/resp"
 	"TinyTik/service"
@@ -35,10 +36,16 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	// // 验证 token，获取 userID
+	// 验证 token，获取 userID
 	// userID, err := verifyToken(token)
-
-	userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
+	var userId int64
+	token := c.PostForm("token")
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
+		userId = user.Id
+	} else {
+		logger.Debug("user not exist")
+	}
 
 	// 存储视频数据
 	videoPath := fmt.Sprintf("public/%s-%s", uuid.New().String(), videoHeader.Filename)
@@ -57,12 +64,11 @@ func Publish(c *gin.Context) {
 	coverPath := generateVideoCover(videoPath)
 	logger.Debug(coverPath)
 	coverUrl := fmt.Sprintf("http://localhost:8080/%s", coverPath)
-	_ = coverUrl
 
 	var video model.Video
 	video.AuthorId = userId
-	// video.CoverUrl = coverUrl
-	video.CoverUrl = "http://localhost:8080/public/3.png"
+	video.CoverUrl = coverUrl
+	//video.CoverUrl = "http://localhost:8080/public/3.png"
 	video.CreatedAt = time.Now()
 	video.PlayUrl = playUrl
 	video.Title = title
