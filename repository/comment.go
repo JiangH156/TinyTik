@@ -44,7 +44,7 @@ func (c *CommentRepository) DeleteCommentById(tx *gorm.DB, commentID string) err
 // 通过视频ID查找评论
 func (c *CommentRepository) GetCommentsByVideoID(videoID int64) ([]model.Comment, error) {
 	var comments []model.Comment
-	result := c.DB.Table("video").Where("id = ?", videoID).Find(&comments)
+	result := c.DB.Table("comments").Where("video_id = ?", videoID).Find(&comments)
 	if result.Error != nil {
 		return nil, result.Error
 	}
