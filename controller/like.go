@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/resp"
 	"TinyTik/service"
 	"TinyTik/utils/logger"
@@ -19,7 +20,15 @@ type AllFavoriteList struct {
 func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseInt(c.PostForm("video_id"), 10, 64)
 
-	userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
+	// userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
+	var userId int64
+	token := c.PostForm("token")
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
+		userId = user.Id
+	} else {
+		logger.Debug("user not exist")
+	}
 
 	actionType, _ := strconv.ParseInt(c.PostForm("action_type"), 10, 64)
 
