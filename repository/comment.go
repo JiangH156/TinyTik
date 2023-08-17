@@ -76,7 +76,7 @@ func GetCommentList(videoIdStr string) ([]resp.CommentResponse, error) {
 	commentsLock.RLock()
 
 	var comments []*model.Comment
-	result := CommentDB.Table("videos").Where("video_id = ?", videoID).Find(&comments)
+	result := CommentDB.Table("comments").Where("video_id = ?", videoID).Find(&comments)
 	if result.Error != nil {
 		commentsLock.RUnlock()
 		return nil, result.Error

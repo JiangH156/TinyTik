@@ -174,6 +174,7 @@ func FollowList(c *gin.Context) {
 func FollowerList(c *gin.Context) {
 	token := c.Query("token")
 	redis := common.GetRedisClient()
+	// TODO 这里要注意一下
 	if _, exist := redis.UserLoginInfo(token); exist {
 		id, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 		repo := repository.GetRelaRepo()
