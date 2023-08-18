@@ -36,7 +36,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, resp.UserLoginResponse{
-		Response: resp.Response{StatusCode: 0},
+		Response: resp.Response{StatusCode: 0, StatusMsg: "Register success!"},
 		UserId:   id,
 		Token:    token,
 	})
@@ -68,7 +68,7 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp.UserLoginResponse{
-		Response: resp.Response{StatusCode: 0},
+		Response: resp.Response{StatusCode: 0, StatusMsg: "Login success!"},
 		UserId:   id,
 		Token:    token,
 	})

@@ -102,8 +102,8 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 			}
 
 			userInfo.Signature = "try"
-			userInfo.Avatar = "http://8.130.16.80:8080/public/1.jpg"
-			userInfo.BackgroundImage = "http://8.130.16.80:8080/public/1.jpg"
+			userInfo.Avatar = "https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/public/1.jpg"
+			userInfo.BackgroundImage = "https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/public/1.jpg"
 
 			v.User = userInfo
 

@@ -54,7 +54,6 @@ func (c *CommentService) GetCommentList(videoIdStr string) ([]resp.CommentRespon
 	if err != nil {
 		return nil, err
 	}
-
 	commentRepo := repository.NewCommentRepository()
 	comments, err := commentRepo.GetCommentsByVideoID(videoID)
 	if err != nil {

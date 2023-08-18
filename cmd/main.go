@@ -41,7 +41,11 @@ func loadConfig() {
 	parentDir := filepath.Dir(dir)
 
 	// 配置文件所在目录
+<<<<<<< HEAD
+	viper.AddConfigPath(parentDir + "/app/config/")
+=======
 	viper.AddConfigPath(parentDir + "/config/")
+>>>>>>> 683d5d2ef701ef3c75acb0fb26aa3d582db0af82
 	viper.SetConfigName("application_dev")
 	// 配置文件类型
 	viper.SetConfigType("yml")
