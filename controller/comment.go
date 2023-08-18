@@ -21,7 +21,7 @@ type CommentListResponse struct {
 
 type CommentActionResponse struct {
 	resp.Response
-	resp.CommentResponse   `json:"comment,omitempty"`
+	resp.CommentResponse `json:"comment,omitempty"`
 }
 
 var commentIdSequence = int64(0) //commentId的id号
@@ -44,7 +44,8 @@ func CommentAction(c *gin.Context) {
 				CreateDate: time.Now().Format("05-01"),
 				VideoId:    int64(videoIdInt),
 			}
-			c.JSON(http.StatusOK, CommentActionResponse{Response: resp.Response{StatusCode: 0},
+			c.JSON(http.StatusOK, CommentActionResponse{
+				Response: resp.Response{StatusCode: 0},
 				CommentResponse: resp.CommentResponse{
 					Id:         commentIdSequence,
 					User:       user,
@@ -70,6 +71,7 @@ func CommentAction(c *gin.Context) {
 // CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
 	video_id := c.Query("video_id")
+
 	//获取评论
 	CommentService := service.NewCommentService()
 	commentList, err := CommentService.GetCommentList(video_id)

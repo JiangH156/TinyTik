@@ -25,7 +25,6 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-
 	authService := service.NewAuthService()
 	// service注册逻辑
 	id, token, lErr := authService.Register(model.UserAuth{UserName: username, Password: password})
@@ -36,7 +35,6 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-
 	c.JSON(http.StatusOK, resp.UserLoginResponse{
 		Response: resp.Response{StatusCode: 0, StatusMsg: "Register success!"},
 		UserId:   id,

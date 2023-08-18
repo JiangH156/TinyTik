@@ -47,7 +47,7 @@ func (r *RedisClient) UpdateUser(key string, updatedUser model.User) error {
 	}
 
 	// 将更新后的用户数据存储回 Redis
-	updatedUserBytes, err := json.Marshal(existingUser)
+	updatedUserBytes, err := json.Marshal(updatedUser)
 	if err != nil {
 		// 处理编码错误
 		return err
