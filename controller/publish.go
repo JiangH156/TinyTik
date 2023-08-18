@@ -58,7 +58,7 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	playUrl := fmt.Sprintf("https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/%s", videoPath)
+	playUrl := fmt.Sprintf("http://8.130.16.80:8080/%s", videoPath)
 
 	// 截取视频封面
 	coverPath := generateVideoCover(videoPath)

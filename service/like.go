@@ -95,7 +95,7 @@ func (l *likeSerVice) FavoriteList(ctx context.Context, userId int64) (*[]VideoL
 		logger.Debug("GetVideoListByLikeIdList")
 		return nil, err
 	}
-	resp, err := feedService.GetRespVideo(ctx, videoList)
+	resp, err := feedService.GetRespVideo(ctx, videoList, userId)
 	if err != nil {
 		logger.Debug("GetRespVideo")
 		return nil, err
