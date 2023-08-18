@@ -1,15 +1,15 @@
 # server
 server:
-  address: 127.0.0.1
+  address: 
   port: 8080
 
 # mysql
 datasource:
-  username:
-  password:
-  host: 127.0.0.1
-  port: 3306
-  database:
+  username: root
+  password: WmJSDYom
+  host: 172.16.32.80
+  port: 50644
+  database: tinytik
   charset: utf8mb4
   parseTime: true
   loc: Asia/Shanghai
@@ -24,10 +24,11 @@ email:
 
 # redis
 redis:
-  address: 127.0.0.1
-  port: 6379
-  password:
+  address: 172.16.32.80
+  port: 50645
+  password: kROelQlT
   db: 0
+  expire: 24h   # s m h d
 
 # logger
 logger:
