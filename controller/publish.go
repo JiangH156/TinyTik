@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/resp"
 	"TinyTik/service"
+	"TinyTik/utils/logger"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -33,13 +36,20 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	// // 验证 token，获取 userID
+	// 验证 token，获取 userID
 	// userID, err := verifyToken(token)
-
-	userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
+	var userId int64
+	token := c.PostForm("token")
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
+		userId = user.Id
+	} else {
+		logger.Debug("user not exist")
+	}
 
 	// 存储视频数据
 	videoPath := fmt.Sprintf("public/%s-%s", uuid.New().String(), videoHeader.Filename)
+
 	if err := c.SaveUploadedFile(videoHeader, videoPath); err != nil {
 		c.JSON(http.StatusInternalServerError, resp.Response{
 			StatusCode: -1,
@@ -48,15 +58,17 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	playUrl := fmt.Sprintf("http://localhost:8080/%s", videoPath)
+	playUrl := fmt.Sprintf("https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/%s", videoPath)
 
 	// 截取视频封面
 	coverPath := generateVideoCover(videoPath)
-	coverUrl := fmt.Sprintf("http://localhost:8080/%s", coverPath)
+	logger.Debug(coverPath)
+	coverUrl := fmt.Sprintf("https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/%s", coverPath)
 
 	var video model.Video
 	video.AuthorId = userId
 	video.CoverUrl = coverUrl
+	//video.CoverUrl = "http://localhost:8080/public/3.png"
 	video.CreatedAt = time.Now()
 	video.PlayUrl = playUrl
 	video.Title = title
@@ -110,8 +122,16 @@ func PublishList(c *gin.Context) {
 func generateVideoCover(videoPath string) string {
 	// 使用 ffmpeg 获取视频的第一帧作为封面
 	coverFilename := strings.TrimSuffix(videoPath, ".mp4") + "_cover.jpg"
-	command := fmt.Sprintf("ffmpeg -i %s -ss 00:00:01 -vframes 1 %s", videoPath, coverFilename)
-	_, err := exec.Command("sh", "-c", command).Output()
+	command := []string{
+		"-i", videoPath,
+		"-ss", "00:00:01",
+		"-vframes", "1",
+		coverFilename,
+	}
+	cmd := exec.Command("ffmpeg", command...)
+	cmd.Stderr = os.Stderr // Redirect stderr to console for error messages
+
+	err := cmd.Run()
 	if err != nil {
 		fmt.Println("Error generating cover:", err)
 		return ""

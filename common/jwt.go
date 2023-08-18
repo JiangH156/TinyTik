@@ -1,7 +1,6 @@
 package common
 
 import (
-	"TinyTik/utils/logger"
 	"errors"
 	"time"
 
@@ -38,7 +37,6 @@ func GenToken(UserName string) (string, error) {
 	}
 	//使用指定的签名方法创建签名对象
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	logger.Fatal(token)
 	//使用指定的secret签名并获得完整的编码后的字符串token
 	tokenString, err := token.SignedString(jwtScret)
 	if err != nil {
