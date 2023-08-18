@@ -16,11 +16,11 @@ var (
 
 // FavoriteList  在service的响应结构体
 type VideoList struct {
-	VideoS        model.Video
-	UserS         model.User `json:"author"`
-	FavoriteCount int64      `json:"favorite_count"`
-	CommentCount  int64      `json:"comment_count"`
-	IsFavorite    bool       `json:"is_favorite"`
+	model.Video
+	model.User    `json:"author"`
+	FavoriteCount int64 `json:"favorite_count"`
+	CommentCount  int64 `json:"comment_count"`
+	IsFavorite    bool  `json:"is_favorite"`
 }
 
 type FeedService interface {
@@ -85,7 +85,8 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 	for _, v := range *videoList {
 
 		var respVideo VideoList
-		respVideo.VideoS = v
+
+		respVideo.Video = v
 
 		wg := sync.WaitGroup{}
 		wg.Add(4)
@@ -93,18 +94,24 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 		////注意要加错误处理和redis
 		go func(v *VideoList) {
 			defer wg.Done()
-			userInfo, err := repository.NewUserRepository().GetUserById(v.VideoS.AuthorId) //GetUserInfoByAuthorId
+			userInfo, err := repository.NewUserRepository().GetUserById(v.Video.AuthorId) //GetUserInfoByAuthorId
+
 			if err != nil {
 				//日志
 				return
 			}
-			v.UserS = userInfo
+
+			userInfo.Signature = "try"
+			userInfo.Avatar = "http://localhost:8080/public/1.jpg"
+			userInfo.BackgroundImage = "http://localhost:8080/public/1.jpg"
+
+			v.User = userInfo
 
 		}(&respVideo)
 
 		go func(v *VideoList) {
 			defer wg.Done()
-			favoriteCount, err := repository.NewLikes().GetLikeCountByVideoId(ctx, v.VideoS.Id)
+			favoriteCount, err := repository.NewLikes().GetLikeCountByVideoId(ctx, v.Video.Id)
 			if err != nil {
 				//日志
 				return
@@ -114,7 +121,8 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 		}(&respVideo)
 		go func(v *VideoList) {
 			defer wg.Done()
-			commentCount, err := repository.NewFeed().GetCommentCountByVideoId(ctx, v.VideoS.Id)
+
+			commentCount, err := repository.NewCommentRepository().GetCommentCountByVideoId(ctx, v.Video.Id)
 			if err != nil {
 				//日志
 				return
@@ -125,7 +133,7 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 		}(&respVideo)
 		go func(v *VideoList) {
 			defer wg.Done()
-			isFavorite, err := repository.NewLikes().GetIslike(ctx, v.VideoS.Id, v.VideoS.AuthorId)
+			isFavorite, err := repository.NewLikes().GetIslike(ctx, v.Video.Id, v.Video.AuthorId)
 			if err != nil {
 				//日志
 				return

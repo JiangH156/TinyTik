@@ -3,8 +3,8 @@ package controller
 import (
 	"TinyTik/common"
 	"TinyTik/model"
-	"TinyTik/repository"
 	"TinyTik/resp"
+	"TinyTik/service"
 	"TinyTik/utils/logger"
 	"net/http"
 	"strconv"
@@ -52,12 +52,14 @@ func CommentAction(c *gin.Context) {
 					CreateDate: time.Now().Format("05-01")},
 			})
 			//保存tempComment到数据库中
-			repository.SaveComment(&tempComment)
+			CommentService := service.NewCommentService()
+			CommentService.SaveComment(&tempComment)
 			return
 		} else if actionType == "2" { //删除评论
 			comment_id := c.Query("comment_id")
 			video_id := c.Query("video_id")
-			repository.DeleteComment(comment_id, video_id)
+			CommentService := service.NewCommentService()
+			CommentService.DeleteComment(comment_id, video_id)
 		}
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 0})
 	} else {
@@ -69,7 +71,8 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	video_id := c.Query("video_id")
 	//获取评论
-	commentList, err := repository.GetCommentList(video_id)
+	CommentService := service.NewCommentService()
+	commentList, err := CommentService.GetCommentList(video_id)
 	if err != nil {
 		logger.Fatal(err)
 		c.JSON(http.StatusOK, CommentListResponse{
