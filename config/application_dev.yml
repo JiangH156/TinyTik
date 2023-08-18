@@ -5,9 +5,9 @@ server:
 # mysql
 datasource:
   username: root
-  password: WmJSDYom
-  host: 172.16.32.80
-  port: 50644
+  password: john156
+  host: 127.0.0.1
+  port: 3306
   database: tinytik
   charset: utf8mb4
   parseTime: true
@@ -23,9 +23,9 @@ email:
 
 # redis
 redis:
-  address: 172.16.32.80
-  port: 50645
-  password: kROelQlT
+  address: 127.0.0.1
+  port: 6379
+  password:
   db: 0
   expire: 24h   # s m h d
 
