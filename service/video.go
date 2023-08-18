@@ -24,10 +24,10 @@ type VideoList struct {
 }
 
 type FeedService interface {
-	Feed(c context.Context, latestTime time.Time) (*[]VideoList, time.Time, error)
+	Feed(c context.Context, latestTime time.Time, userId int64) (*[]VideoList, time.Time, error)
 	Publish(c context.Context, video *model.Video) error
 	PublishList(c context.Context, userId int64) (*[]VideoList, error)
-	GetRespVideo(ctx context.Context, videoList *[]model.Video) (*[]VideoList, error)
+	GetRespVideo(ctx context.Context, videoList *[]model.Video, userId int64) (*[]VideoList, error)
 }
 
 var _ FeedService = (*VideoList)(nil)
@@ -40,14 +40,14 @@ func NewVideo() *VideoList {
 	return feedService
 }
 
-func (v *VideoList) Feed(c context.Context, latestTime time.Time) (*[]VideoList, time.Time, error) {
+func (v *VideoList) Feed(c context.Context, latestTime time.Time, userId int64) (*[]VideoList, time.Time, error) {
 
 	videos, earliestTime, err := repository.NewFeed().GetVideosByLatestTime(c, latestTime)
 	if err != nil {
 		return nil, time.Now(), err
 	}
 
-	respVideo, err := v.GetRespVideo(c, videos)
+	respVideo, err := v.GetRespVideo(c, videos, userId)
 	if err != nil {
 		return nil, time.Now(), err
 	}
@@ -70,7 +70,7 @@ func (v *VideoList) PublishList(c context.Context, userId int64) (*[]VideoList, 
 	if err != nil {
 		return nil, err
 	}
-	respVideo, err := v.GetRespVideo(c, videos)
+	respVideo, err := v.GetRespVideo(c, videos, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (v *VideoList) PublishList(c context.Context, userId int64) (*[]VideoList, 
 
 }
 
-func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) (*[]VideoList, error) {
+func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, userId int64) (*[]VideoList, error) {
 	var resp []VideoList
 
 	for _, v := range *videoList {
@@ -102,8 +102,8 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 			}
 
 			userInfo.Signature = "try"
-			userInfo.Avatar = "https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/public/1.jpg"
-			userInfo.BackgroundImage = "https://30e25bd98e604811113cfa9867e933e8-app.1024paas.com/public/1.jpg"
+			userInfo.Avatar = "http://8.130.16.80:8080/public/1.jpg"
+			userInfo.BackgroundImage = "http://8.130.16.80:8080/public/3.jpg"
 
 			v.User = userInfo
 
@@ -119,6 +119,7 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 			v.FavoriteCount = favoriteCount
 
 		}(&respVideo)
+
 		go func(v *VideoList) {
 			defer wg.Done()
 
@@ -132,12 +133,11 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video) 
 
 		}(&respVideo)
 		go func(v *VideoList) {
-			defer wg.Done()
-			isFavorite, err := repository.NewLikes().GetIslike(ctx, v.Video.Id, v.Video.AuthorId)
+			defer wg.Done() //用户不存在时是默认值false
+			isFavorite, err := repository.NewLikes().GetIslike(ctx, v.Video.Id, userId)
 			if err != nil {
 				//日志
 				return
-
 			}
 			v.IsFavorite = isFavorite
 
