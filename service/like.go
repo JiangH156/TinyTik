@@ -5,10 +5,10 @@ import (
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/utils/logger"
+	"time"
 
 	"context"
 	"fmt"
-	"time"
 )
 
 var (
@@ -43,7 +43,7 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 	likeRepositoy := repository.NewLikes()
 
 	if action_type == 1 { //执行点赞操作
-		// 在Redis中记录用户点赞状态
+		//在Redis中记录用户点赞状态
 		err := common.RedisA.Set(ctx, fmt.Sprintf("%d:%d", videoId, userId), 1, 500*time.Millisecond).Err()
 		if err != nil {
 			return err
@@ -63,7 +63,7 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 			return err
 		}
 		// 在MySQL中删除用户点赞记录
-
+		//错误
 		if err := likeRepositoy.FavoriteAction(ctx, userId, videoId, false); err != nil {
 			return err
 		}

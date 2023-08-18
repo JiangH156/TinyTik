@@ -5,11 +5,7 @@ server:
 # mysql
 datasource:
   username: root
-<<<<<<< HEAD
   password: john156
-=======
-  password: 
->>>>>>> b2b550c8f9c33d47fab7c7de5db1a12092b00455
   host: 127.0.0.1
   port: 3306
   database: tinytik

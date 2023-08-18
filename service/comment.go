@@ -94,5 +94,5 @@ func findUserByID(users []*model.User, userID int64) *model.User {
 			return user
 		}
 	}
-	return nil
+	return &model.User{}
 }

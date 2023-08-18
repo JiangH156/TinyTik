@@ -62,12 +62,8 @@ func Publish(c *gin.Context) {
 
 	// 截取视频封面
 	coverPath := generateVideoCover(videoPath)
-<<<<<<< HEAD
 	coverUrl := fmt.Sprintf("http://8.130.16.80:8080/%s", coverPath)
-=======
 	logger.Debug(coverPath)
-	coverUrl := fmt.Sprintf("http://localhost:8080/%s", coverPath)
->>>>>>> b2b550c8f9c33d47fab7c7de5db1a12092b00455
 
 	var video model.Video
 	video.AuthorId = userId
