@@ -89,7 +89,7 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 		respVideo.Video = v
 
 		wg := sync.WaitGroup{}
-		wg.Add(4)
+		wg.Add(5)
 
 		////注意要加错误处理和redis
 		go func(v *VideoList) {
@@ -141,6 +141,23 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 			}
 			v.IsFavorite = isFavorite
 
+		}(&respVideo)
+
+		// 维护is_Follow字段
+		go func(v *VideoList) {
+			defer wg.Done()
+			// 用户未登录状态
+			if userId == 0 {
+				return
+			}
+			repo := repository.GetRelaRepo()
+			rel, err := repo.GetRelationById(userId, v.Video.AuthorId)
+			if err != nil { // 不存在relation记录或出错
+				return
+			}
+			if rel.Status == model.FOLLOW { // 当前登录用户已关注视频发布者用户
+				respVideo.IsFollow = true
+			}
 		}(&respVideo)
 		wg.Wait()
 

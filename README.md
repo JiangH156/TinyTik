@@ -20,7 +20,7 @@ Go版本：1.20
 | Bcrypt    | 密码加密服务         | https://godoc.org/golang.org/x/crypto/bcrypt |
 | Validator | 参数校验           | https://github.com/go-playground/validator |
 | Uuid      | ID生成           | https://github.com/google/uuid             |
-
+|FFmpeg     | 封面截取          |https://www.ffmpeg.org/download.html   |
 
 
 ## 3、团队分工
