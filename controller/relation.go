@@ -162,7 +162,7 @@ func FollowList(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, FollowListResponse{
 			Response: resp.Response{
-				StatusCode: http.StatusOK,
+				StatusCode: 0,
 				StatusMsg:  "查询成功",
 			},
 			Users: res,
@@ -208,7 +208,7 @@ func FollowerList(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, FollowerListResponse{
 			Response: resp.Response{
-				StatusCode: http.StatusOK,
+				StatusCode: 0,
 				StatusMsg:  "查询成功",
 			},
 			Users: res,
@@ -253,7 +253,7 @@ func FriendList(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, FriendListResponse{
 			Response: resp.Response{
-				StatusCode: http.StatusOK,
+				StatusCode: 0,
 				StatusMsg:  "查询成功",
 			},
 			Users: res,
