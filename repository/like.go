@@ -30,14 +30,24 @@ func NewLikes() *likes {
 
 func (l *likes) FavoriteAction(ctx context.Context, userId int64, videoId int64, liked bool) error {
 
+	var id int64
 	like := model.Like{UserId: userId, VideoId: videoId, Liked: liked}
 
-	//Save 方法用于创建新记录或者更新已存在的记录，它会根据主键来判断是新增还是更新操作。如果结构体中定义的主键为空，则会执行插入操作；如果主键已经有值，则会执行更新操作。
+	//Save 方法用于创建新记录或者更新已存在的记录，它会根据主键来判断是新增还是更新操作。
+	//如果结构体中定义的主键为空，则会执行插入操作；如果主键已经有值，则会执行更新操作。
 	//根据结构体的信息自动保存到相应的表中
 	// user := User{Name: "Alice", Age: 25}
 	// db.Save(&user) // 插入新记录或者更新已存在的记录
+	err := l.db.Model(&model.Like{}).Select("id").Where("user_id = ? and video_id =?", userId, videoId).Find(&id).Error
+	if err != nil {
+		return err
+	}
 
-	err := l.db.Save(&like).Error
+	if id != 0 {
+		like.Id = id
+	}
+
+	err = l.db.Save(&like).Error
 	if err != nil {
 		return err
 	}
@@ -51,6 +61,7 @@ func (l *likes) GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int6
 		logger.Debug("func (l *likes) GetlikeIdListByUserId(ctx context.Context, userId int64) ([]int64, error) {")
 		return nil, err
 	}
+	logger.Debug("GetlikeIdListByUserId   数据为空")
 
 	return likeList, nil
 }
