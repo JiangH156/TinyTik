@@ -3,6 +3,7 @@ package service
 import (
 	"TinyTik/model"
 	"TinyTik/repository"
+	"TinyTik/utils/logger"
 
 	"context"
 	"sync"
@@ -89,7 +90,7 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 		respVideo.Video = v
 
 		wg := sync.WaitGroup{}
-		wg.Add(5)
+		wg.Add(4)
 
 		////注意要加错误处理和redis
 		go func(v *VideoList) {
@@ -98,14 +99,38 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 
 			if err != nil {
 				//日志
+				logger.Debug("repository.NewUserRepository().GetUserById 获取用户信息错误")
 				return
 			}
 
 			userInfo.Signature = "try"
 			userInfo.Avatar = "http://8.130.16.80:8080/public/1.jpg"
-			userInfo.BackgroundImage = "http://8.130.16.80:8080/public/3.jpg"
+			userInfo.BackgroundImage = "http://8.130.16.80:8080/public/1.jpg"
 
 			v.User = userInfo
+
+			// 维护is_Follow字段
+			// 用户未登录状态
+			if userId == 0 {
+				logger.Debug("用户未登录状态")
+
+			}
+
+			if userId == v.User.Id {
+
+			} else {
+				repo := repository.GetRelaRepo()
+				logger.Debug(userId, respVideo.User.Id)
+
+				rel, err := repo.GetRelationById(userId, v.User.Id)
+				if err != nil { // 不存在relation记录或出错
+					logger.Debug("GetRelationById  获取关注信息错误")
+				}
+
+				if rel.Status == model.FOLLOW { // 当前登录用户已关注视频发布者用户
+					respVideo.IsFollow = true
+				}
+			}
 
 		}(&respVideo)
 
@@ -114,6 +139,7 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 			favoriteCount, err := repository.NewLikes().GetLikeCountByVideoId(ctx, v.Video.Id)
 			if err != nil {
 				//日志
+				logger.Debug("repository.NewLikes().GetLikeCountByVideoId 获取喜欢数目错误")
 				return
 			}
 			v.FavoriteCount = favoriteCount
@@ -126,39 +152,31 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 			commentCount, err := repository.NewCommentRepository().GetCommentCountByVideoId(ctx, v.Video.Id)
 			if err != nil {
 				//日志
+				logger.Debug("repository.NewCommentRepository().GetCommentCountByVideoId 获取评论数量错误")
 				return
 
 			}
 			v.CommentCount = commentCount
 
 		}(&respVideo)
+
 		go func(v *VideoList) {
 			defer wg.Done() //用户不存在时是默认值false
+			// 用户未登录状态
+			if userId == 0 {
+				logger.Debug("用户未登录状态")
+				return
+			}
 			isFavorite, err := repository.NewLikes().GetIslike(ctx, v.Video.Id, userId)
 			if err != nil {
 				//日志
+				logger.Debug("repository.NewLikes().GetIslike 获取是否喜欢错误")
 				return
 			}
 			v.IsFavorite = isFavorite
 
 		}(&respVideo)
 
-		// 维护is_Follow字段
-		go func(v *VideoList) {
-			defer wg.Done()
-			// 用户未登录状态
-			if userId == 0 {
-				return
-			}
-			repo := repository.GetRelaRepo()
-			rel, err := repo.GetRelationById(userId, v.Video.AuthorId)
-			if err != nil { // 不存在relation记录或出错
-				return
-			}
-			if rel.Status == model.FOLLOW { // 当前登录用户已关注视频发布者用户
-				respVideo.IsFollow = true
-			}
-		}(&respVideo)
 		wg.Wait()
 
 		resp = append(resp, respVideo)

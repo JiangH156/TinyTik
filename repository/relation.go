@@ -3,6 +3,7 @@ package repository
 import (
 	"TinyTik/common"
 	"TinyTik/model"
+	"TinyTik/utils/logger"
 	"errors"
 	"sync"
 
@@ -80,12 +81,15 @@ func (r *RelaRepo) GetFriendListById(id int64) ([]model.User, error) {
 func (r *RelaRepo) UpdateRelation(user model.User, toUser model.User, follow byte) error {
 	// 执行事务
 	return r.DB.Transaction(func(tx *gorm.DB) error {
+		logger.Debug("取消关注")
 		// 在事务中执行一些 db 操作（从这里开始，您应该使用 'tx' 而不是 'db'）
 		if err := tx.Model(&user).Updates(user).Error; err != nil {
 			// 返回任何错误都会回滚事务
 			return err
 		}
+
 		if err := tx.Model(&toUser).Updates(toUser).Error; err != nil {
+			logger.Debug("取消关注失败")
 			return err
 		}
 		// 更新关系表
