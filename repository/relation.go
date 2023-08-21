@@ -81,11 +81,11 @@ func (r *RelaRepo) UpdateRelation(user model.User, toUser model.User, follow byt
 	// 执行事务
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		// 在事务中执行一些 db 操作（从这里开始，您应该使用 'tx' 而不是 'db'）
-		if err := tx.Save(&user).Error; err != nil {
+		if err := tx.Model(&user).Updates(user).Error; err != nil {
 			// 返回任何错误都会回滚事务
 			return err
 		}
-		if err := tx.Save(&toUser).Error; err != nil {
+		if err := tx.Model(&toUser).Updates(toUser).Error; err != nil {
 			return err
 		}
 		// 更新关系表
