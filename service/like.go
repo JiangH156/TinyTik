@@ -39,10 +39,13 @@ func NewlikeSerVice() *likeSerVice {
 }
 
 func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId int64, action_type int64) error {
+
 	// var ls likeSerVice
 	likeRepositoy := repository.NewLikes()
 
 	if action_type == 1 { //执行点赞操作
+
+		logger.Debug("执行点赞操作")
 		//在Redis中记录用户点赞状态
 		err := common.RedisA.Set(ctx, fmt.Sprintf("%d:%d", videoId, userId), 1, 500*time.Millisecond).Err()
 		if err != nil {
@@ -56,6 +59,8 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 		}
 
 	} else if action_type == 2 { //执行取消点赞操作
+
+		logger.Debug("执行取消点赞操作")
 
 		// 在Redis中移除用户点赞状态
 		err := common.RedisA.Del(ctx, fmt.Sprintf("%d:%d", videoId, userId)).Err()

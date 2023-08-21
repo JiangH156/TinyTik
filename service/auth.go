@@ -169,6 +169,7 @@ func (u *AuthService) Login(loginAuth model.UserAuth) (id int64, token string, l
 		}
 	}
 	// 登录的用户，直接添加到redis缓存中
+
 	userRepository := repository.NewUserRepository()
 	user, err := userRepository.GetUserById(auth.ID)
 	// 用户是存在的，错误不是ErrRecordNotFound错误

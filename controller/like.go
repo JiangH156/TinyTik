@@ -18,7 +18,7 @@ type AllFavoriteList struct {
 
 // FavoriteAction no practical effect, just check if token is valid
 func FavoriteAction(c *gin.Context) {
-	videoId, _ := strconv.ParseInt(c.PostForm("video_id"), 10, 64)
+	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
 
 	// userId, _ := strconv.ParseInt(c.PostForm("user_id"), 10, 64)
 	var userId int64
@@ -33,7 +33,17 @@ func FavoriteAction(c *gin.Context) {
 		logger.Debug("user not exist")
 	}
 
-	actionType, _ := strconv.ParseInt(c.PostForm("action_type"), 10, 64)
+	actionTypeInt32 := c.Query("action_type")
+	if actionTypeInt32 == "" {
+		// 处理空字符串的情况
+		logger.Debug("空字符串")
+	}
+
+	actionType, err := strconv.ParseInt(actionTypeInt32, 10, 64)
+	if err != nil {
+		// 处理解析错误
+		logger.Debug("转换错误")
+	}
 
 	likeSerVice := service.NewlikeSerVice()
 
