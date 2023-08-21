@@ -33,8 +33,8 @@ func NewFeed() *videos {
 }
 
 func (v *videos) Save(ctx context.Context, video *model.Video) error {
-	var videor *model.Video
-	videor = video
+
+	videor := video
 	return v.db.Save(&videor).Error
 }
 
