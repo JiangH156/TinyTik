@@ -50,7 +50,7 @@ func (r *RelaRepo) GetRelationById(id int64, toId int64) (model.Relation, error)
 func (r *RelaRepo) GetFollowListById(id int64) ([]model.User, error) {
 	users := []model.User{}
 	res := r.DB.Model(&model.User{}).
-		Select("users.*, IF(EXISTS(SELECT * FROM relations r1 WHERE users.id = r1.user_id AND r1.to_user_id = ? AND r1.status = ?), true, false) as is_follow", id, model.FOLLOW).
+		Select("users.*, true as is_follow").
 		Joins("JOIN relations r ON users.id = r.to_user_id AND r.user_id = ? AND r.status = ?", id, model.FOLLOW).
 		Scan(&users)
 	return users, res.Error
