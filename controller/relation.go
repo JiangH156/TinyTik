@@ -5,6 +5,7 @@ import (
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/resp"
+	"TinyTik/utils/logger"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -29,6 +30,7 @@ func RelationAction(c *gin.Context) {
 	redis := common.GetRedisClient()
 	repo := repository.GetRelaRepo()
 	if user, exist := redis.UserLoginInfo(token); exist {
+		user, err := repository.NewUserRepository().GetUserById(user.Id)
 		toUser, err := repository.NewUserRepository().GetUserById(to_user_id)
 		if err != nil {
 			c.JSON(http.StatusOK, RelationActionResponse{
@@ -90,9 +92,10 @@ func RelationAction(c *gin.Context) {
 						c.JSON(http.StatusOK, RelationActionResponse{
 							Response: resp.Response{
 								StatusCode: -1,
-								StatusMsg:  "取关失败",
+								StatusMsg:  "取关失败:" + err.Error(),
 							},
 						})
+						logger.Error("取关失败:" + err.Error())
 					} else {
 						c.JSON(http.StatusOK, RelationActionResponse{
 							Response: resp.Response{
@@ -118,7 +121,6 @@ func RelationAction(c *gin.Context) {
 				})
 			}
 		}
-		c.JSON(http.StatusOK, resp.Response{StatusCode: 0})
 	} else {
 		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
