@@ -17,7 +17,7 @@
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand":  "go version",
-	"postStartCommand": ["mysqld_safe", "redis-server"],
+	// "postStartCommand": ["mysqld_safe", "redis-server"],
 
 	// Configure tool-specific properties.
 	// "customizations": {},

@@ -1,37 +1,37 @@
 # server
 server:
-  port: 8080
+    port: 8080
 
 # mysql
 datasource:
-  username: root
-  password: 
-  host: 127.0.0.1
-  port: 3306
-  database: tinytik
-  charset: utf8mb4
-  parseTime: true
-  loc: Asia/Shanghai
+    username: root
+    password: 123456
+    host: 127.0.0.1
+    port: 3306
+    database: tinytik
+    charset: utf8mb4
+    parseTime: true
+    loc: Asia/Shanghai
 
 # email
 email:
-  alias:
-  host: smtp.163.com
-  port: 465
-  username:
-  password:
+    alias:
+    host: smtp.163.com
+    port: 465
+    username:
+    password:
 
 # redis
 redis:
-  address: 127.0.0.1
-  port: 6379
-  password:
-  db: 0
-  expire: 24h   # s m h d
+    address: 127.0.0.1
+    port: 6379
+    password:
+    db: 0
+    expire: 24h # s m h d
 
 # logger
 logger:
-  path: logs
-  name: TinyTik
-  ext: log
-  timeFormat: "2006-01-01"
+    path: logs
+    name: TinyTik
+    ext: log
+    timeFormat: '2006-01-01'
