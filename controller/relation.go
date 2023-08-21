@@ -40,6 +40,13 @@ func RelationAction(c *gin.Context) {
 			})
 			return
 		}
+		if user.Id == toUser.Id {
+			c.JSON(http.StatusOK, resp.Response{
+				StatusCode: -1,
+				StatusMsg:  "不能对自己进行操作",
+			})
+			return
+		}
 		switch action_type {
 		case 1: // TODO: 统一定义操作码，关注操作
 			{
