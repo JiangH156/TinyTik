@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -43,27 +42,28 @@ func CommentAction(c *gin.Context) {
 				logger.Debug(err)
 				return
 			}
-
 			text := c.Query("comment_text")
-			atomic.AddInt64(&commentIdSequence, 1)
 			tempComment := model.Comment{
-				Id:         commentIdSequence,
 				User:       int64(user.Id),
 				Content:    text,
 				CreateDate: time.Now().Format("05-01"),
 				VideoId:    int64(videoIdInt),
 			}
+			CommentService := service.NewCommentService()
+			commentID, err1 := CommentService.SaveComment(&tempComment)
+			if err1 != nil {
+				logger.Debug(err1)
+				return
+			}
 			c.JSON(http.StatusOK, CommentActionResponse{
 				Response: resp.Response{StatusCode: 0},
 				CommentResponse: resp.CommentResponse{
-					Id:         commentIdSequence,
+					Id:         commentID,
 					User:       user,
 					Content:    text,
 					CreateDate: time.Now().Format("05-01")},
 			})
-			//保存tempComment到数据库中
-			CommentService := service.NewCommentService()
-			CommentService.SaveComment(&tempComment)
+
 			return
 		} else if actionType == "2" { //删除评论
 

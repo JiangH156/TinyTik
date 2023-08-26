@@ -21,17 +21,18 @@ func NewCommentService() *CommentService {
 }
 
 // 保存评论
-func (c *CommentService) SaveComment(comment *model.Comment) error {
+func (c *CommentService) SaveComment(comment *model.Comment) (int64, error) {
 	commentRepo := repository.NewCommentRepository()
 	tx := c.DB.Begin()
 
-	if err := commentRepo.CreateComment(tx, comment); err != nil {
+	commentID, err := commentRepo.CreateComment(tx, comment)
+	if err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
 	tx.Commit()
-	return nil
+	return commentID, nil
 }
 
 // 删除评论
