@@ -1,21 +1,21 @@
 package controller
 
 import (
-	"fmt"
-	"github.com/gin-gonic/gin"
+	"TinyTik/common"
+	"TinyTik/model"
+	"TinyTik/resp"
+	"TinyTik/service"
+	"TinyTik/utils/logger"
 	"net/http"
 	"strconv"
-	"sync/atomic"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
-var tempChat = map[string][]Message{}
-
-var messageIdSequence = int64(1)
-
 type ChatResponse struct {
-	Response
-	MessageList []Message `json:"message_list"`
+	resp.Response
+	MessageList []model.Message `json:"message_list"`
 }
 
 // MessageAction no practical effect, just check if token is valid
@@ -24,25 +24,31 @@ func MessageAction(c *gin.Context) {
 	toUserId := c.Query("to_user_id")
 	content := c.Query("content")
 
-	if user, exist := usersLoginInfo[token]; exist {
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist { //用户存在，生成聊天key
 		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(user.Id, int64(userIdB))
-
-		atomic.AddInt64(&messageIdSequence, 1)
-		curMessage := Message{
-			Id:         messageIdSequence,
+		curMessage := model.Message{
 			Content:    content,
-			CreateTime: time.Now().Format(time.Kitchen),
+			CreateTime: int64(time.Now().Unix()),
+			ToUserId:   int64(userIdB),
+			FromUserId: user.Id,
 		}
+		MessageService := service.NewMessageService()
+		err := MessageService.SendMsg(&curMessage)
+		if err != nil {
+			// 处理错误，例如记录日志或返回错误响应
+			logger.Error(err) // 记录错误日志
 
-		if messages, exist := tempChat[chatKey]; exist {
-			tempChat[chatKey] = append(messages, curMessage)
-		} else {
-			tempChat[chatKey] = []Message{curMessage}
+			// 返回错误响应
+			c.JSON(http.StatusInternalServerError, resp.Response{
+				StatusCode: 1,
+				StatusMsg:  "Failed to send message",
+			})
+			return
 		}
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
+		c.JSON(http.StatusOK, resp.Response{StatusCode: 0, StatusMsg: "send success"})
 	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
 }
 
@@ -50,20 +56,16 @@ func MessageAction(c *gin.Context) {
 func MessageChat(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
+	preMsgTime, _ := strconv.ParseInt(c.Query("pre_msg_time"), 10, 64)
 
-	if user, exist := usersLoginInfo[token]; exist {
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(user.Id, int64(userIdB))
+		MessageService := service.NewMessageService()
+		msgList, _ := MessageService.GetMeassageList(user.Id, int64(userIdB), preMsgTime)
 
-		c.JSON(http.StatusOK, ChatResponse{Response: Response{StatusCode: 0}, MessageList: tempChat[chatKey]})
+		c.JSON(http.StatusOK, ChatResponse{Response: resp.Response{StatusCode: 0, StatusMsg: "pull success"}, MessageList: msgList})
 	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, resp.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
-}
-
-func genChatKey(userIdA int64, userIdB int64) string {
-	if userIdA > userIdB {
-		return fmt.Sprintf("%d_%d", userIdB, userIdA)
-	}
-	return fmt.Sprintf("%d_%d", userIdA, userIdB)
 }

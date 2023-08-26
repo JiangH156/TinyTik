@@ -1,59 +1,141 @@
 package controller
 
 import (
+	"TinyTik/common"
+	"TinyTik/model"
+	"TinyTik/resp"
+	"TinyTik/service"
+	"TinyTik/utils/logger"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
-	"path/filepath"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type VideoListResponse struct {
-	Response
-	VideoList []Video `json:"video_list"`
+	Res    resp.Response
+	Videos []service.VideoList `json:"video_list"`
 }
 
 // Publish check token then save upload file to public directory
 func Publish(c *gin.Context) {
-	token := c.PostForm("token")
+	title := c.PostForm("title")
 
-	if _, exist := usersLoginInfo[token]; !exist {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
-		return
-	}
-
-	data, err := c.FormFile("data")
+	videoHeader, err := c.FormFile("data")
 	if err != nil {
-		c.JSON(http.StatusOK, Response{
-			StatusCode: 1,
-			StatusMsg:  err.Error(),
+		c.JSON(http.StatusInternalServerError, resp.Response{
+			StatusCode: -1,
+			StatusMsg:  "Get file err",
 		})
 		return
 	}
 
-	filename := filepath.Base(data.Filename)
-	user := usersLoginInfo[token]
-	finalName := fmt.Sprintf("%d_%s", user.Id, filename)
-	saveFile := filepath.Join("./public/", finalName)
-	if err := c.SaveUploadedFile(data, saveFile); err != nil {
-		c.JSON(http.StatusOK, Response{
-			StatusCode: 1,
-			StatusMsg:  err.Error(),
+	// 验证 token，获取 userID
+	// userID, err := verifyToken(token)
+	var userId int64
+	token := c.PostForm("token")
+	redis := common.GetRedisClient()
+	if user, exist := redis.UserLoginInfo(token); exist {
+		userId = user.Id
+	} else {
+		logger.Debug("user not exist")
+	}
+
+	// 存储视频数据
+	videoPath := fmt.Sprintf("public/%s-%s", uuid.New().String(), videoHeader.Filename)
+
+	if err := c.SaveUploadedFile(videoHeader, videoPath); err != nil {
+		c.JSON(http.StatusInternalServerError, resp.Response{
+			StatusCode: -1,
+			StatusMsg:  "Save file err",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, Response{
-		StatusCode: 0,
-		StatusMsg:  finalName + " uploaded successfully",
-	})
+	playUrl := fmt.Sprintf("http://8.130.16.80:8080/%s", videoPath)
+
+	// 截取视频封面
+	coverPath := generateVideoCover(videoPath)
+
+	coverUrl := fmt.Sprintf("http://8.130.16.80:8080/%s", coverPath)
+	logger.Debug(coverPath)
+
+	var video model.Video
+	video.AuthorId = userId
+	video.CoverUrl = coverUrl
+	//video.CoverUrl = "http://localhost:8080/public/3.png"
+	video.CreatedAt = time.Now()
+	video.PlayUrl = playUrl
+	video.Title = title
+	video.UpdatedAt = time.Now()
+
+	// 存储视频信息和封面路径，这里可以将视频和封面路径存储到数据库中
+	err = service.NewVideo().Publish(c, &video)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, resp.Response{
+			StatusCode: -1,
+			StatusMsg:  "Save file err",
+		})
+
+	} else {
+		c.JSON(http.StatusOK, resp.Response{
+			StatusCode: 0,
+			StatusMsg:  videoHeader.Filename + " uploaded successfully",
+		})
+	}
+
 }
 
 // PublishList all users have same publish video list
 func PublishList(c *gin.Context) {
-	c.JSON(http.StatusOK, VideoListResponse{
-		Response: Response{
-			StatusCode: 0,
-		},
-		VideoList: DemoVideos,
-	})
+	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
+
+	videoService := service.NewVideo()
+	videoList, err := videoService.PublishList(c, userId)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, VideoListResponse{
+			Res: resp.Response{
+				StatusCode: -1,
+				StatusMsg:  "Publish list false",
+			},
+			Videos: nil})
+
+	} else {
+
+		c.JSON(http.StatusOK, VideoListResponse{
+			Res: resp.Response{
+				StatusCode: 0,
+				StatusMsg:  "Publish list success",
+			},
+			Videos: *videoList,
+		})
+	}
+}
+
+func generateVideoCover(videoPath string) string {
+	// 使用 ffmpeg 获取视频的第一帧作为封面
+	coverFilename := strings.TrimSuffix(videoPath, ".mp4") + "_cover.jpg"
+	command := []string{
+		"-i", videoPath,
+		"-ss", "00:00:01",
+		"-vframes", "1",
+		coverFilename,
+	}
+	cmd := exec.Command("ffmpeg", command...)
+	cmd.Stderr = os.Stderr // Redirect stderr to console for error messages
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error generating cover:", err)
+		return ""
+	}
+	return coverFilename
 }

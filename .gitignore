@@ -4,3 +4,8 @@
 .1024feature*
 .nfs*
 node_modules
+/config/application_dev.yml
+.1024feature-file
+.1024
+.breakpoints
+
