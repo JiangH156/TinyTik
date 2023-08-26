@@ -40,10 +40,10 @@ func (r *RelaRepo) Followed(user *model.User, toUser *model.User) bool {
 }
 
 func (r *RelaRepo) GetRelationById(id int64, toId int64) (model.Relation, error) {
+
 	rel := model.Relation{}
-	res := r.DB.Where("user_id = ? AND to_user_id = ?", id, toId).First(&rel)
-	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		return rel, res.Error
+	if err := r.DB.Where("user_id = ? AND to_user_id = ?", id, toId).First(&rel).Error; err != nil {
+		return rel, err
 	}
 	return rel, nil
 }
