@@ -13,7 +13,7 @@ import (
 
 type AllFavoriteList struct {
 	Res    resp.Response
-	Videos *[]service.VideoList
+	Videos *[]service.VideoList `json:"video_list"`
 }
 
 // FavoriteAction no practical effect, just check if token is valid

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,10 +28,22 @@ func RelationAction(c *gin.Context) {
 	token := c.Query("token")
 	to_user_id, _ := strconv.ParseInt(c.Query("to_user_id"), 10, 64)
 	action_type, _ := strconv.ParseInt(c.Query("action_type"), 10, 32)
+
 	redis := common.GetRedisClient()
 	repo := repository.GetRelaRepo()
 	if user, exist := redis.UserLoginInfo(token); exist {
+
 		user, err := repository.NewUserRepository().GetUserById(user.Id)
+		if err != nil {
+			c.JSON(http.StatusOK, RelationActionResponse{
+				Response: resp.Response{
+					// TODO 统一定义返回码
+					StatusCode: -1,
+					StatusMsg:  "请求关注用户失败，用户不存在",
+				},
+			})
+			return
+		}
 		toUser, err := repository.NewUserRepository().GetUserById(to_user_id)
 		if err != nil {
 			c.JSON(http.StatusOK, RelationActionResponse{
@@ -54,6 +67,14 @@ func RelationAction(c *gin.Context) {
 			{
 				// 如果没有关注的话，进行关注
 				if !repo.Followed(&user, &toUser) {
+
+					//更新redis
+					err := common.RedisA.Set(c, fmt.Sprintf("isFollow:%v:%v", user.Id, to_user_id), true, 10*time.Minute).Err()
+					if err != nil {
+						logger.Debug(err)
+						return
+					}
+
 					// FIXME 修改user和toUser时需要加锁
 					user.FollowCount += 1
 					toUser.FollowerCount += 1
@@ -85,6 +106,15 @@ func RelationAction(c *gin.Context) {
 			{
 				// 如果存在关注关系的话进行取关
 				if repo.Followed(&user, &toUser) {
+
+					//更新redis 取消关注
+
+					err := common.RedisA.Del(c, fmt.Sprintf("isFollow:%v:%v", user.Id, to_user_id)).Err()
+					if err != nil {
+						logger.Debug(err)
+						return
+					}
+
 					user.FollowCount -= 1
 					toUser.FollowerCount -= 1
 

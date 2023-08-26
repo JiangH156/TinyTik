@@ -68,6 +68,7 @@ func loadRedis() {
 	port := viper.GetInt("redis.port")
 	password := viper.GetString("redis.password")
 	db := viper.GetInt("redis.db")
+
 	common.RedisSetup(&common.RedisConfig{
 		Address:  address,
 		Port:     port,
@@ -81,7 +82,7 @@ func loadLogger() {
 	name := viper.GetString("logger.name")
 	ext := viper.GetString("logger.ext")
 	timeFormat := viper.GetString("logger.timeFormat")
-	//fmt.Println(timeFormat)
+
 	logger.Setup(&logger.Settings{
 		Path:       path,
 		Name:       name,

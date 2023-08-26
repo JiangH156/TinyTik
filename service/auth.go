@@ -65,11 +65,14 @@ func (u *AuthService) Register(regAuth model.UserAuth) (id int64, token string, 
 	}
 	// User 存储信息
 	creUser := model.User{
-		Id:            creUserAuth.ID, // 操作的userauth，存放id
-		Name:          creUserAuth.UserName,
-		FollowCount:   0,
-		FollowerCount: 0,
-		IsFollow:      false,
+		Id:              creUserAuth.ID, // 操作的userauth，存放id
+		Name:            creUserAuth.UserName,
+		FollowCount:     0,
+		FollowerCount:   0,
+		IsFollow:        false,
+		Signature:       "try",
+		Avatar:          "http://8.130.16.80:8080/public/1.jpg",
+		BackgroundImage: "http://8.130.16.80:8080/public/1.jpg",
 	}
 	userRepository := repository.NewUserRepository()
 	err = userRepository.CreateUser(tx, creUser)

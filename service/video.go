@@ -1,13 +1,19 @@
 package service
 
 import (
+	"TinyTik/common"
 	"TinyTik/model"
 	"TinyTik/repository"
 	"TinyTik/utils/logger"
+	"fmt"
+	"strconv"
 
 	"context"
 	"sync"
 	"time"
+
+	"github.com/go-redis/redis"
+	"gorm.io/gorm"
 )
 
 var (
@@ -29,6 +35,16 @@ type FeedService interface {
 	Publish(c context.Context, video *model.Video) error
 	PublishList(c context.Context, userId int64) (*[]VideoList, error)
 	GetRespVideo(ctx context.Context, videoList *[]model.Video, userId int64) (*[]VideoList, error)
+
+	///
+	GetAuthorInfoByredis(c context.Context, userId int64, authorId int64) (*model.User, error)
+	GetAuthorInfoBymysql(c context.Context, userId int64, authorId int64) (*model.User, error)
+
+	GetLikeCountByRedis(c context.Context, videoId int64) (int64, error)
+	GetCommentCountByRedis(c context.Context, videoId int64) (int64, error)
+
+	GetIslikeByRedis(c context.Context, videoId int64, userId int64) (bool, error)
+	GetIsFollowByRedis(c context.Context, userId int64, authorId int64) (bool, error)
 }
 
 var _ FeedService = (*VideoList)(nil)
@@ -58,7 +74,18 @@ func (v *VideoList) Feed(c context.Context, latestTime time.Time, userId int64) 
 }
 
 func (v *VideoList) Publish(c context.Context, video *model.Video) error {
-	err := repository.NewFeed().Save(c, video)
+
+	db := common.GetDB()
+	err := db.Transaction(func(tx *gorm.DB) error {
+		err := repository.NewFeed().Save(c, tx, video)
+		if err != nil {
+			return err
+		}
+		if err := repository.NewUserRepository().UpdateUserInfo(tx, video.AuthorId, 0, 3); err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
@@ -91,55 +118,22 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 
 		wg := sync.WaitGroup{}
 		wg.Add(4)
-
-		////注意要加错误处理和redis
 		go func(v *VideoList) {
 			defer wg.Done()
-			userInfo, err := repository.NewUserRepository().GetUserById(v.Video.AuthorId) //GetUserInfoByAuthorId
-
+			userInfo, err := v.GetAuthorInfoByredis(ctx, userId, v.Video.AuthorId)
 			if err != nil {
-				//日志
-				logger.Debug("repository.NewUserRepository().GetUserById 获取用户信息错误")
+				logger.Debug("获取用户信息错误", err)
 				return
 			}
-
-			userInfo.Signature = "try"
-			userInfo.Avatar = "http://8.130.16.80:8080/public/1.jpg"
-			userInfo.BackgroundImage = "http://8.130.16.80:8080/public/1.jpg"
-
-			v.User = userInfo
-
-			// 维护is_Follow字段
-			// 用户未登录状态
-			if userId == 0 {
-				logger.Debug("用户未登录状态")
-
-			}
-
-			if userId == v.User.Id {
-
-			} else {
-				repo := repository.GetRelaRepo()
-				logger.Debug(userId, respVideo.User.Id)
-
-				rel, err := repo.GetRelationById(userId, v.User.Id)
-				if err != nil { // 不存在relation记录或出错
-					logger.Debug("GetRelationById  获取关注信息错误")
-				}
-
-				if rel.Status == model.FOLLOW { // 当前登录用户已关注视频发布者用户
-					respVideo.IsFollow = true
-				}
-			}
-
+			v.User = *userInfo
 		}(&respVideo)
 
 		go func(v *VideoList) {
 			defer wg.Done()
-			favoriteCount, err := repository.NewLikes().GetLikeCountByVideoId(ctx, v.Video.Id)
+			favoriteCount, err := v.GetLikeCountByRedis(ctx, v.Video.Id)
 			if err != nil {
 				//日志
-				logger.Debug("repository.NewLikes().GetLikeCountByVideoId 获取喜欢数目错误")
+				logger.Debug("获取喜欢数目错误", err)
 				return
 			}
 			v.FavoriteCount = favoriteCount
@@ -149,10 +143,10 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 		go func(v *VideoList) {
 			defer wg.Done()
 
-			commentCount, err := repository.NewCommentRepository().GetCommentCountByVideoId(ctx, v.Video.Id)
+			commentCount, err := v.GetCommentCountByRedis(ctx, v.Video.Id)
 			if err != nil {
 				//日志
-				logger.Debug("repository.NewCommentRepository().GetCommentCountByVideoId 获取评论数量错误")
+				logger.Debug("获取评论数量错误", err)
 				return
 
 			}
@@ -167,10 +161,11 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 				logger.Debug("用户未登录状态")
 				return
 			}
-			isFavorite, err := repository.NewLikes().GetIslike(ctx, v.Video.Id, userId)
+			isFavorite, err := v.GetIslikeByRedis(ctx, v.Video.Id, userId)
+
 			if err != nil {
 				//日志
-				logger.Debug("repository.NewLikes().GetIslike 获取是否喜欢错误")
+				logger.Debug("获取是否喜欢错误", err)
 				return
 			}
 			v.IsFavorite = isFavorite
@@ -183,4 +178,228 @@ func (v *VideoList) GetRespVideo(ctx context.Context, videoList *[]model.Video, 
 
 	}
 	return &resp, nil
+}
+
+func (v *VideoList) GetAuthorInfoByredis(c context.Context, userId int64, authorId int64) (*model.User, error) {
+	redisData, err := common.RedisA.HGetAll(c, fmt.Sprintf("authorId:%v", strconv.FormatInt(authorId, 10))).Result()
+	if err == redis.Nil || len(redisData) == 0 {
+		userInfo, err := v.GetAuthorInfoBymysql(c, userId, authorId)
+		if err != nil {
+			logger.Debug("v.GetUserInfoBymysql 获取用户信息错误")
+			return nil, err
+		}
+
+		err = common.RedisA.HSet(c,
+			fmt.Sprintf("authorId:%v", strconv.FormatInt(authorId, 10)),
+			"id", strconv.FormatInt(userInfo.Id, 10),
+			"name", userInfo.Name,
+			"follow_count", strconv.FormatInt(userInfo.FollowCount, 10),
+			"follower_count", strconv.FormatInt(userInfo.FollowerCount, 10),
+			"avatar", userInfo.Avatar,
+			"background_image", userInfo.BackgroundImage,
+			"signature", userInfo.Signature,
+			"total_favorited", strconv.FormatInt(userInfo.TotalFavorited, 10),
+			"work_count", strconv.FormatInt(userInfo.WorkCount, 10),
+			"favorite_count", strconv.FormatInt(userInfo.FavoriteCount, 10),
+		).Err()
+		if err != nil {
+			logger.Debug("common.RedisA.HMSet  mysql设置redis用户信息错误", err)
+			return nil, err
+		}
+		err = common.RedisA.Expire(c,
+			fmt.Sprintf("authorId:%v", strconv.FormatInt(authorId, 10)),
+			10*time.Minute).Err()
+		if err != nil {
+			logger.Debug("common.RedisA.Expire  redis过期时间错误", err)
+			return nil, err
+		}
+
+		return userInfo, nil
+
+	} else if err != nil {
+
+		logger.Debug(err)
+		return nil, err
+	} else {
+
+		var author *model.User = &model.User{}
+
+		author.Id, err = strconv.ParseInt(redisData["id"], 10, 64)
+		if err != nil {
+			logger.Debug(err)
+			return nil, err
+		}
+		author.FollowCount, _ = strconv.ParseInt(redisData["follow_count"], 10, 64)
+		author.FollowerCount, _ = strconv.ParseInt(redisData["follower_count"], 10, 64)
+		author.TotalFavorited, _ = strconv.ParseInt(redisData["total_favorited"], 10, 64)
+		author.WorkCount, _ = strconv.ParseInt(redisData["work_count"], 10, 64)
+		author.FavoriteCount, _ = strconv.ParseInt(redisData["favorite_count"], 10, 64)
+
+		// 字符串字段直接赋值
+		author.Name = redisData["name"]
+		author.Avatar = redisData["avatar"]
+		author.BackgroundImage = redisData["background_image"]
+		author.Signature = redisData["signature"]
+
+		if userId != 0 {
+			// 自己视频
+			if userId != authorId {
+				isFollow, err := v.GetIsFollowByRedis(c, userId, authorId)
+
+				if err != nil {
+					//日志
+					logger.Debug("获取是否关注错误", err)
+					return nil, err
+				}
+				author.IsFollow = isFollow
+
+			}
+
+		}
+
+		return author, nil
+
+	}
+
+}
+
+func (v *VideoList) GetAuthorInfoBymysql(c context.Context, userId int64, authorId int64) (*model.User, error) {
+
+	userInfo, err := repository.NewUserRepository().GetUserById(authorId)
+	if err != nil {
+		logger.Debug("repository.NewUserRepository().GetUserById 获取用户信息错误")
+		return nil, err
+	}
+
+	return &userInfo, nil
+}
+
+func (v *VideoList) GetLikeCountByRedis(c context.Context, videoId int64) (int64, error) {
+	redisData, err := common.RedisA.Get(c, fmt.Sprintf("likeCount:%d", videoId)).Result()
+	if err == redis.Nil || len(redisData) == 0 {
+		likeCount, err := repository.NewLikes().GetLikeCountByVideoId(c, videoId)
+		if err != nil {
+			logger.Debug(err)
+			return 0, err
+		}
+		err = common.RedisA.Set(c, fmt.Sprintf("likeCount:%d", videoId), strconv.FormatInt(likeCount, 10), 10*time.Minute).Err()
+		if err != nil {
+			logger.Debug(err)
+			return 0, err
+		}
+		return likeCount, nil
+	} else if err != nil {
+		logger.Debug(err)
+		return 0, err
+	}
+	count, err := strconv.ParseInt(redisData, 10, 64)
+	if err != nil {
+		logger.Debug(err)
+		return 0, err
+	}
+
+	return count, nil
+
+}
+
+func (v *VideoList) GetCommentCountByRedis(c context.Context, videoId int64) (int64, error) {
+	redisData, err := common.RedisA.Get(c, fmt.Sprintf("commentCount:%d", videoId)).Result()
+	if err == redis.Nil || len(redisData) == 0 {
+		commentCount, err := repository.NewCommentRepository().GetCommentCountByVideoId(c, videoId)
+		if err != nil { // 不存在relation记录或出错
+			logger.Debug(err)
+			return 0, err
+		}
+		err = common.RedisA.Set(c, fmt.Sprintf("commentCount:%d", videoId), strconv.FormatInt(commentCount, 10), 10*time.Minute).Err()
+		if err != nil {
+			logger.Debug(err)
+			return 0, err
+		}
+		return commentCount, nil
+	} else if err != nil {
+		logger.Debug(err)
+		return 0, err
+	}
+	count, err := strconv.ParseInt(redisData, 10, 64)
+	if err != nil {
+		logger.Debug(err)
+		return 0, err
+	}
+
+	return count, nil
+
+}
+func (v *VideoList) GetIslikeByRedis(c context.Context, videoId int64, userId int64) (bool, error) {
+
+	redsiData, err := common.RedisA.Get(c, fmt.Sprintf("isLike:%d:%d", videoId, userId)).Result()
+	if err == redis.Nil || len(redsiData) == 0 {
+
+		isLike, err := repository.NewLikes().GetIslike(c, videoId, userId)
+		if err != nil {
+			logger.Debug("GetRelationById  获取关注信息错误")
+			return false, err
+		}
+
+		//更新redis
+		err = common.RedisA.Set(c, fmt.Sprintf("isLike:%d:%d", videoId, userId), strconv.FormatBool(isLike), 10*time.Minute).Err()
+		if err != nil {
+			logger.Debug(err)
+			return false, err
+		}
+		return isLike, nil
+
+	} else if err != nil {
+
+		logger.Debug(err)
+		return false, err
+	}
+
+	like, err := strconv.ParseBool(redsiData)
+	if err != nil {
+		logger.Debug(err)
+		return false, err
+	}
+
+	return like, nil
+}
+
+func (v *VideoList) GetIsFollowByRedis(c context.Context, userId int64, authorId int64) (bool, error) {
+
+	redisData, err := common.RedisA.Get(c, fmt.Sprintf("isFollow:%v:%v", userId, authorId)).Result()
+	if err == redis.Nil || len(redisData) == 0 {
+		rel, err := repository.GetRelaRepo().GetRelationById(userId, authorId)
+		if err != nil { // 不存在relation记录或出错
+			logger.Debug("GetRelationById  获取关注信息错误")
+			return false, err
+		}
+
+		var status bool
+		if rel.Status == model.FOLLOW {
+			status = true
+		}
+
+		//更新redis
+		err = common.RedisA.Set(c, fmt.Sprintf("isFollow:%v:%v", userId, authorId), status, 10*time.Minute).Err()
+
+		if err != nil {
+			logger.Debug(err)
+			return status, err
+		}
+
+		return status, nil
+
+	} else if err != nil {
+
+		logger.Debug(err)
+		return false, err
+	}
+
+	isFollow, err := strconv.ParseBool(redisData)
+	if err != nil {
+		logger.Debug(err)
+		return false, err
+	}
+
+	return isFollow, nil
+
 }

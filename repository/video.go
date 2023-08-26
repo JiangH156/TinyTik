@@ -11,7 +11,7 @@ import (
 )
 
 type VideoRepositoy interface {
-	Save(ctx context.Context, video *model.Video) error
+	Save(ctx context.Context, tx *gorm.DB, video *model.Video) error
 
 	GetVideosByUserID(ctx context.Context, userId int64) (*[]model.Video, error)
 	GetVideosByLatestTime(ctx context.Context, latestTime time.Time) (*[]model.Video, time.Time, error)
@@ -32,10 +32,10 @@ func NewFeed() *videos {
 	}
 }
 
-func (v *videos) Save(ctx context.Context, video *model.Video) error {
+func (v *videos) Save(ctx context.Context, tx *gorm.DB, video *model.Video) error {
 
 	videor := video
-	return v.db.Save(&videor).Error
+	return tx.Save(&videor).Error
 }
 
 func (v *videos) GetVideosByUserID(ctx context.Context, userId int64) (*[]model.Video, error) {
@@ -48,21 +48,22 @@ func (v *videos) GetVideosByUserID(ctx context.Context, userId int64) (*[]model.
 }
 
 func (v *videos) GetVideosByLatestTime(ctx context.Context, latestTime time.Time) (*[]model.Video, time.Time, error) {
-	var videos []model.Video
-	// err := v.db.Model(&model.Video{}).Where("created_at < ?", latestTime).Order("created_at desc").Limit(30).Find(&videos).Error
+	videos := make([]model.Video, 0)
+	logger.Debug(latestTime, "上一次时间")
+	//err := v.db.Model(&model.Video{}).Where("created_at < ?", latestTime).Order("created_at desc").Limit(30).Find(&videos).Error
 	err := v.db.Model(&model.Video{}).Order("created_at desc").Limit(30).Find(&videos).Error
 
 	if err != nil {
 		return nil, time.Now(), err
 
-	} else {
-		if len(videos) == 0 {
-			logger.Debug("no videos")
-			return &videos, time.Now(), nil
-		} else {
-			return &videos, videos[len(videos)-1].CreatedAt, nil
+	}
 
-		}
+	if len(videos) == 0 {
+		logger.Debug("no videos")
+		return &videos, time.Now(), nil
+	} else {
+		return &videos, videos[len(videos)-1].CreatedAt, nil
+
 	}
 
 }

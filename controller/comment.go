@@ -6,6 +6,7 @@ import (
 	"TinyTik/resp"
 	"TinyTik/service"
 	"TinyTik/utils/logger"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync/atomic"
@@ -35,6 +36,14 @@ func CommentAction(c *gin.Context) {
 	redis := common.GetRedisClient()
 	if user, exist := redis.UserLoginInfo(token); exist { //需要一个根据token找到user的接口
 		if actionType == "1" { //发送评论
+
+			//更新redis中的commentCount
+			err := common.RedisA.Incr(c, fmt.Sprintf("commentCount:%v", videoIdStr)).Err()
+			if err != nil {
+				logger.Debug(err)
+				return
+			}
+
 			text := c.Query("comment_text")
 			atomic.AddInt64(&commentIdSequence, 1)
 			tempComment := model.Comment{
@@ -57,6 +66,13 @@ func CommentAction(c *gin.Context) {
 			CommentService.SaveComment(&tempComment)
 			return
 		} else if actionType == "2" { //删除评论
+
+			//更新redis中的commentCount
+			err := common.RedisA.Decr(c, fmt.Sprintf("commentCount:%v", videoIdStr)).Err()
+			if err != nil {
+				logger.Debug(err)
+				return
+			}
 			comment_id := c.Query("comment_id")
 			video_id := c.Query("video_id")
 			CommentService := service.NewCommentService()

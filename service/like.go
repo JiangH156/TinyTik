@@ -9,6 +9,8 @@ import (
 
 	"context"
 	"fmt"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -47,14 +49,33 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 
 		logger.Debug("执行点赞操作")
 		//在Redis中记录用户点赞状态
-		err := common.RedisA.Set(ctx, fmt.Sprintf("%d:%d", videoId, userId), 1, 500*time.Millisecond).Err()
+		err := common.RedisA.Set(ctx, fmt.Sprintf("isLike:%d:%d", videoId, userId), true, 10*time.Minute).Err()
 		if err != nil {
 			return err
 		}
+		//刷新redis中的likeCount
+		err = common.RedisA.Incr(ctx, fmt.Sprintf("likeCount:%d", videoId)).Err()
+		if err != nil {
+			logger.Debug(err)
+			return err
+		}
 
-		// 在MySQL中保存用户点赞记录
+		//使用事务
+		db := common.GetDB()
+		err = db.Transaction(func(tx *gorm.DB) error {
+			// 在MySQL中保存用户点赞记录
+			if err := likeRepositoy.FavoriteAction(ctx, tx, userId, videoId, true); err != nil {
+				return err
+			}
+			//刷新用户信息
+			if err := repository.NewUserRepository().UpdateUserInfo(tx, userId, videoId, 1); err != nil {
+				return err
+			}
 
-		if err := likeRepositoy.FavoriteAction(ctx, userId, videoId, true); err != nil {
+			return nil
+
+		})
+		if err != nil {
 			return err
 		}
 
@@ -63,13 +84,32 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 		logger.Debug("执行取消点赞操作")
 
 		// 在Redis中移除用户点赞状态
-		err := common.RedisA.Del(ctx, fmt.Sprintf("%d:%d", videoId, userId)).Err()
+		err := common.RedisA.Del(ctx, fmt.Sprintf("isLike:%d:%d", videoId, userId)).Err()
 		if err != nil {
 			return err
 		}
-		// 在MySQL中删除用户点赞记录
-		//错误
-		if err := likeRepositoy.FavoriteAction(ctx, userId, videoId, false); err != nil {
+		//刷新redis中的likeCount
+		err = common.RedisA.Decr(ctx, fmt.Sprintf("likeCount:%d", videoId)).Err()
+		if err != nil {
+			logger.Debug(err)
+			return err
+		}
+
+		db := common.GetDB()
+		err = db.Transaction(func(tx *gorm.DB) error {
+			// 在MySQL中保存用户点赞记录
+			if err := likeRepositoy.FavoriteAction(ctx, tx, userId, videoId, false); err != nil {
+				return err
+			}
+			//刷新用户信息
+			if err := repository.NewUserRepository().UpdateUserInfo(tx, userId, videoId, 2); err != nil {
+				return err
+			}
+
+			return nil
+
+		})
+		if err != nil {
 			return err
 		}
 
@@ -77,14 +117,6 @@ func (l *likeSerVice) FavoriteAction(ctx context.Context, userId int64, videoId 
 	return nil
 
 }
-
-// type VideoList struct {
-// 	VideoS        Video
-// 	UserS         User
-// 	FavoriteCount int64 `json:"favorite_count"`
-// 	CommentCount  int64 `json:"comment_count"`
-// 	IsFavorite    bool  `json:"is_favorite"`
-// }
 
 // favorite_count comment_count  is_favorite       __--根据userid查找用户信息
 func (l *likeSerVice) FavoriteList(ctx context.Context, userId int64) (*[]VideoList, error) {

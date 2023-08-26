@@ -29,6 +29,7 @@ var (
 	RedisA *redis.Client
 	Redis  *RedisClient
 	expire = time.Hour * 24
+	// expire = time.Second * 1
 )
 
 func (r *RedisClient) UpdateUser(key string, updatedUser model.User) error {

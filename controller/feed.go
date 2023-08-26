@@ -6,6 +6,7 @@ import (
 	"TinyTik/service"
 	"TinyTik/utils/logger"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,10 +33,19 @@ func Feed(c *gin.Context) {
 	}
 
 	latestTime := c.Query("latest_time")
-	// userId := c.Query("user_id")
-	s := "2006-01-02 15:04:05"
+
+	// logger.Debug(latestTime, " url时间")
+
+	latestTimeUnix, err := strconv.ParseInt(latestTime, 10, 64)
+	if err != nil {
+		logger.Debug("Error parsing UNIX timestamp:", err)
+	}
 	loc, _ := time.LoadLocation("Asia/Shanghai")
-	timeParse, _ := time.ParseInLocation(s, latestTime, loc)
+	timeParse := time.Unix(latestTimeUnix, 0).In(loc)
+
+	if timeParse.After(time.Now()) {
+		timeParse = time.Now()
+	}
 
 	feedS := service.NewVideo()
 	feedVideo, earliestTime, err := feedS.Feed(c, timeParse, userId)
