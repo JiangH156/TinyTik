@@ -7,8 +7,10 @@ import (
 	"TinyTik/utils/logger"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -64,6 +66,7 @@ func (u *AuthService) Register(regAuth model.UserAuth) (id int64, token string, 
 		}
 	}
 	// User 存储信息
+	urlPre := viper.GetString("server.urlPre")
 	creUser := model.User{
 		Id:              creUserAuth.ID, // 操作的userauth，存放id
 		Name:            creUserAuth.UserName,
@@ -71,8 +74,8 @@ func (u *AuthService) Register(regAuth model.UserAuth) (id int64, token string, 
 		FollowerCount:   0,
 		IsFollow:        false,
 		Signature:       "try",
-		Avatar:          "http://8.130.16.80:8080/public/1.jpg",
-		BackgroundImage: "http://8.130.16.80:8080/public/1.jpg",
+		Avatar:          fmt.Sprintf("%spublic/1.jpg ", urlPre),
+		BackgroundImage: fmt.Sprintf("%spublic/1.jpg ", urlPre),
 	}
 	userRepository := repository.NewUserRepository()
 	err = userRepository.CreateUser(tx, creUser)

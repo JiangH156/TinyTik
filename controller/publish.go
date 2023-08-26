@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 type VideoListResponse struct {
@@ -58,12 +59,14 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	playUrl := fmt.Sprintf("http://8.130.16.80:8080/%s", videoPath)
+	urlPre := viper.GetString("server.urlPre")
+
+	playUrl := fmt.Sprintf("%s%s", urlPre, videoPath)
 
 	// 截取视频封面
 	coverPath := generateVideoCover(videoPath)
 
-	coverUrl := fmt.Sprintf("http://8.130.16.80:8080/%s", coverPath)
+	coverUrl := fmt.Sprintf("%s%s", urlPre, coverPath)
 	logger.Debug(coverPath)
 
 	var video model.Video
