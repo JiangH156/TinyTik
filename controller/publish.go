@@ -58,6 +58,12 @@ func Publish(c *gin.Context) {
 		})
 		return
 	}
+	//压缩视频
+	// videoPath, err = compressVideo(videoPath)
+	// if err != nil {
+	// 	logger.Debug("compressVideo false:", err)
+	// 	return
+	// }
 
 	urlPre := viper.GetString("server.urlPre")
 
@@ -141,4 +147,26 @@ func generateVideoCover(videoPath string) string {
 		return ""
 	}
 	return coverFilename
+}
+
+func compressVideo(inputVideoPath string) (string, error) {
+	outputVideoPath := strings.TrimSuffix(inputVideoPath, ".mp4") + "CMP.mp4"
+	command := []string{
+		"-i", inputVideoPath,
+		"-c:v", "libx264",
+		//"-b:v", "1M", // 使用比特率代替 -crf
+		"-crf", "18",
+		"-y", // This option enables overwriting without asking
+		outputVideoPath,
+	}
+	cmd := exec.Command("ffmpeg", command...)
+	cmd.Stderr = os.Stderr // Redirect stderr to console for error messages
+
+	err := cmd.Run()
+	if err != nil {
+		logger.Debug("Error compressing video:", err)
+		return outputVideoPath, err
+	}
+
+	return outputVideoPath, nil
 }
