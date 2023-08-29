@@ -20,12 +20,13 @@ func NewCommentRepository() *CommentRepository {
 }
 
 // 保存评论
-func (c *CommentRepository) CreateComment(tx *gorm.DB, comment *model.Comment) error {
+func (c *CommentRepository) CreateComment(tx *gorm.DB, comment *model.Comment) (int64, error) {
 	result := tx.Table("comments").Create(comment)
 	if result.Error != nil {
-		return result.Error
+		return 0, result.Error
 	}
-	return nil
+	// 获取插入后的评论对象，包括自动生成的ID
+	return comment.Id, nil
 }
 
 // 删除评论
